@@ -99,6 +99,17 @@ module eth_phy_10g_tb2;
         serdes_rx_hdr <= 2'b00; // Header arbitrario
     end
 
+    /*  xgmii_txd: representa los datos que se transmiten desde la interfaz XGMII 
+    hacia el módulo (eth_phy_10g). 
+    Cuando cfg_tx_prbs31_enable está habilitado, los datos generados por el PRBS31 
+    se cargan en xgmii_txd, lo que simula la transmisión de datos a través de 
+    la interfaz XGMII hacia el DUT.
+    serdes_rx_data: representa los datos que se reciben en el módulo 
+    (eth_phy_10g) a través del bloque de recepción SerDes. 
+    La secuencia PRBS31 generada (prbs31_rx) se asigna a serdes_rx_data cuando 
+    cfg_rx_prbs31_enable está habilitado.
+    */
+
     // Asignación de instanciación del módulo
     eth_phy_10g #(
         .DATA_WIDTH(DATA_WIDTH),
