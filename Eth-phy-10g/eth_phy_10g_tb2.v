@@ -1,7 +1,7 @@
 `timescale 1ns/1ns
 `include "eth_phy_10g.v"
 
-module eth_phy_10g_tb;
+module eth_phy_10g_tb2;
 
     // Parámetros del módulo
     parameter DATA_WIDTH = 64;
@@ -66,7 +66,7 @@ module eth_phy_10g_tb;
 
     /*
     {prbs31_tx[29:0], prbs31_tx[27:0] ^ prbs31_tx[28] ^ prbs31_tx[29]}
-    esta parte es una concatenación de bits que forma la nueva secuencia PRBS31. 
+    es una concatenación de bits que forma la nueva secuencia PRBS31. 
     Se toma la secuencia PRBS31 actual (prbs31_tx[29:0]) y se le agrega un nuevo bit 
     generado por una operación XOR (bit a bit) de tres bits específicos de la secuencia 
     actual (prbs31_tx[27:0] ^ prbs31_tx[28] ^ prbs31_tx[29]).
@@ -75,6 +75,9 @@ module eth_phy_10g_tb;
     27, 28 y 29 de la secuencia actual se combinan utilizando XOR. 
     El resultado de esta operación XOR se convierte en el nuevo bit que se agrega 
     a la secuencia PRBS31.
+    Todos los bits, excepto el bit en la posición 0, se desplazan hacia la izquierda 
+    en cada ciclo de reloj, mientras que el bit en la posición 0 se calcula mediante 
+    una operación XOR de ciertos bits específicos del registro en cada ciclo de reloj.
     */
 
     // Asignaciones de datos
@@ -129,8 +132,8 @@ module eth_phy_10g_tb;
 
     // Inicialización de la simulación y verificación de resultados
     initial begin
-        $dumpfile("eth_phy_10g_tb.vcd"); 
-        $dumpvars(0, eth_phy_10g_tb); // Dump de todas las variables
+        $dumpfile("eth_phy_10g_tb2.vcd"); 
+        $dumpvars(0, eth_phy_10g_tb2); // Dump de todas las variables
 
         // Reset inicial
         tx_rst <= 1'b0;
@@ -163,6 +166,15 @@ module eth_phy_10g_tb;
 
         // Finalizar la simulación
         $finish;
+    end
+
+    always @(posedge rx_clk) begin
+        if (!rx_rst) begin
+            // Compara solo si no está en estado de reinicio
+            if (xgmii_rxd !== xgmii_txd) begin
+                $display("Error: Datos recibidos no coinciden con los datos transmitidos");
+            end
+        end
     end
 
 endmodule
