@@ -1,0 +1,47 @@
+$date
+	Mon Apr 08 15:08:49 2024
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module blocking_nonblocking $end
+$var reg 1 ! a $end
+$var reg 1 " b $end
+$var reg 1 # c $end
+$var reg 1 $ d $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+x$
+x#
+x"
+x!
+$end
+#10
+0"
+0$
+0#
+0!
+#11
+1$
+#12
+0$
+#13
+1$
+#21
+1"
+1#
+1!
+#33
+0"
+0#
+0!
+#46
+1"
+1#
+1!
+#50

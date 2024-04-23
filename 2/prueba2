@@ -1,0 +1,156 @@
+#! /c/iverilog/bin/vvp
+:ivl_version "0.9.7 " "(v0_9_7)";
+:vpi_time_precision + 0;
+:vpi_module "system";
+:vpi_module "v2005_math";
+:vpi_module "va_math";
+S_010B8460 .scope module, "tb" "tb" 2 40;
+ .timescale 0 0;
+v00F9ECC8_0 .net "carry", 0 0, L_00F9F8D0; 1 drivers
+v00F9F400_0 .var "ci", 0 0;
+v00F9F038_0 .var "r1", 3 0;
+v00F9F458_0 .var "r2", 3 0;
+RS_00F744B4 .resolv tri, L_00F9EDD0, L_00F9F140, L_00F9FBE8, L_00FA1368;
+v00F9F668_0 .net8 "result", 3 0, RS_00F744B4; 4 drivers
+S_010B84E8 .scope module, "U" "adder_hier" 2 60, 2 3, S_010B8460;
+ .timescale 0 0;
+v00F70568_0 .net "c1", 0 0, L_00F9F4B0; 1 drivers
+v00F9F2F8_0 .net "c2", 0 0, L_00F9EE28; 1 drivers
+v00F9F248_0 .net "c3", 0 0, L_00F9FAE0; 1 drivers
+v00F9F610_0 .alias "carry", 0 0, v00F9ECC8_0;
+v00F9F718_0 .net "ci", 0 0, v00F9F400_0; 1 drivers
+v00F9F2A0_0 .net "r1", 3 0, v00F9F038_0; 1 drivers
+v00F9ED20_0 .net "r2", 3 0, v00F9F458_0; 1 drivers
+v00F9F350_0 .alias "result", 3 0, v00F9F668_0;
+L_00F9F560 .part v00F9F038_0, 0, 1;
+L_00F9EFE0 .part v00F9F458_0, 0, 1;
+L_00F9EDD0 .part/pv L_00F9F3A8, 0, 1, 4;
+L_00F9EF30 .part v00F9F038_0, 1, 1;
+L_00F9EF88 .part v00F9F458_0, 1, 1;
+L_00F9F140 .part/pv L_00F9EED8, 1, 1, 4;
+L_00F9F878 .part v00F9F038_0, 2, 1;
+L_00F9F980 .part v00F9F458_0, 2, 1;
+L_00F9FBE8 .part/pv L_00F9FB38, 2, 1, 4;
+L_00FA13C0 .part v00F9F038_0, 3, 1;
+L_00FA1310 .part v00F9F458_0, 3, 1;
+L_00FA1368 .part/pv L_00F9F9D8, 3, 1, 4;
+S_010B79C0 .scope module, "u0" "addbit" 2 33, 3 1, S_010B84E8;
+ .timescale 0 0;
+v00F70D50_0 .net *"_s10", 0 0, C4<0>; 1 drivers
+v00F70880_0 .net *"_s11", 1 0, L_00F9EC70; 1 drivers
+v00F708D8_0 .net *"_s13", 1 0, L_00F9F508; 1 drivers
+v00F70930_0 .net *"_s16", 0 0, C4<0>; 1 drivers
+v00F70A38_0 .net *"_s17", 1 0, L_00F9ED78; 1 drivers
+v00F70B40_0 .net *"_s3", 1 0, L_00F9F198; 1 drivers
+v00F70300_0 .net *"_s6", 0 0, C4<0>; 1 drivers
+v00F70CA0_0 .net *"_s7", 1 0, L_00F9F1F0; 1 drivers
+v00F703B0_0 .net "a", 0 0, L_00F9F560; 1 drivers
+v00F70408_0 .net "b", 0 0, L_00F9EFE0; 1 drivers
+v00F70460_0 .alias "ci", 0 0, v00F9F718_0;
+v00F704B8_0 .alias "co", 0 0, v00F70568_0;
+v00F70510_0 .net "sum", 0 0, L_00F9F3A8; 1 drivers
+L_00F9F4B0 .part L_00F9ED78, 1, 1;
+L_00F9F3A8 .part L_00F9ED78, 0, 1;
+L_00F9F198 .concat [ 1 1 0 0], L_00F9F560, C4<0>;
+L_00F9F1F0 .concat [ 1 1 0 0], L_00F9EFE0, C4<0>;
+L_00F9EC70 .arith/sum 2, L_00F9F198, L_00F9F1F0;
+L_00F9F508 .concat [ 1 1 0 0], v00F9F400_0, C4<0>;
+L_00F9ED78 .arith/sum 2, L_00F9EC70, L_00F9F508;
+S_010B8708 .scope module, "u1" "addbit" 2 34, 3 1, S_010B84E8;
+ .timescale 0 0;
+v00F70720_0 .net *"_s10", 0 0, C4<0>; 1 drivers
+v00F705C0_0 .net *"_s11", 1 0, L_00F9EE80; 1 drivers
+v00F70CF8_0 .net *"_s13", 1 0, L_00F9F090; 1 drivers
+v00F70AE8_0 .net *"_s16", 0 0, C4<0>; 1 drivers
+v00F70C48_0 .net *"_s17", 1 0, L_00F9F0E8; 1 drivers
+v00F70778_0 .net *"_s3", 1 0, L_00F9F6C0; 1 drivers
+v00F70618_0 .net *"_s6", 0 0, C4<0>; 1 drivers
+v00F70670_0 .net *"_s7", 1 0, L_00F9F5B8; 1 drivers
+v00F707D0_0 .net "a", 0 0, L_00F9EF30; 1 drivers
+v00F70828_0 .net "b", 0 0, L_00F9EF88; 1 drivers
+v00F70358_0 .alias "ci", 0 0, v00F70568_0;
+v00F70A90_0 .alias "co", 0 0, v00F9F2F8_0;
+v00F709E0_0 .net "sum", 0 0, L_00F9EED8; 1 drivers
+L_00F9EE28 .part L_00F9F0E8, 1, 1;
+L_00F9EED8 .part L_00F9F0E8, 0, 1;
+L_00F9F6C0 .concat [ 1 1 0 0], L_00F9EF30, C4<0>;
+L_00F9F5B8 .concat [ 1 1 0 0], L_00F9EF88, C4<0>;
+L_00F9EE80 .arith/sum 2, L_00F9F6C0, L_00F9F5B8;
+L_00F9F090 .concat [ 1 1 0 0], L_00F9F4B0, C4<0>;
+L_00F9F0E8 .arith/sum 2, L_00F9EE80, L_00F9F090;
+S_010B8680 .scope module, "u2" "addbit" 2 35, 3 1, S_010B84E8;
+ .timescale 0 0;
+v00F711C8_0 .net *"_s10", 0 0, C4<0>; 1 drivers
+v00F70F60_0 .net *"_s11", 1 0, L_00F9FA30; 1 drivers
+v00F71010_0 .net *"_s13", 1 0, L_00F9FB90; 1 drivers
+v00F710C0_0 .net *"_s16", 0 0, C4<0>; 1 drivers
+v00F71220_0 .net *"_s17", 1 0, L_00F9F770; 1 drivers
+v00F70DA8_0 .net *"_s3", 1 0, L_00F9F820; 1 drivers
+v00F70E00_0 .net *"_s6", 0 0, C4<0>; 1 drivers
+v00F70EB0_0 .net *"_s7", 1 0, L_00F9F7C8; 1 drivers
+v00F70BF0_0 .net "a", 0 0, L_00F9F878; 1 drivers
+v00F702A8_0 .net "b", 0 0, L_00F9F980; 1 drivers
+v00F70988_0 .alias "ci", 0 0, v00F9F2F8_0;
+v00F70B98_0 .alias "co", 0 0, v00F9F248_0;
+v00F706C8_0 .net "sum", 0 0, L_00F9FB38; 1 drivers
+L_00F9FAE0 .part L_00F9F770, 1, 1;
+L_00F9FB38 .part L_00F9F770, 0, 1;
+L_00F9F820 .concat [ 1 1 0 0], L_00F9F878, C4<0>;
+L_00F9F7C8 .concat [ 1 1 0 0], L_00F9F980, C4<0>;
+L_00F9FA30 .arith/sum 2, L_00F9F820, L_00F9F7C8;
+L_00F9FB90 .concat [ 1 1 0 0], L_00F9EE28, C4<0>;
+L_00F9F770 .arith/sum 2, L_00F9FA30, L_00F9FB90;
+S_010B85F8 .scope module, "u3" "addbit" 2 36, 3 1, S_010B84E8;
+ .timescale 0 0;
+v010BB120_0 .net *"_s10", 0 0, C4<0>; 1 drivers
+v010BB178_0 .net *"_s11", 1 0, L_00FA1100; 1 drivers
+v010BB2D8_0 .net *"_s13", 1 0, L_00FA0D90; 1 drivers
+v010BB1D0_0 .net *"_s16", 0 0, C4<0>; 1 drivers
+v010BB228_0 .net *"_s17", 1 0, L_00FA10A8; 1 drivers
+v010BB280_0 .net *"_s3", 1 0, L_00F9F928; 1 drivers
+v010BB330_0 .net *"_s6", 0 0, C4<0>; 1 drivers
+v00F70E58_0 .net *"_s7", 1 0, L_00F9FA88; 1 drivers
+v00F71068_0 .net "a", 0 0, L_00FA13C0; 1 drivers
+v00F70FB8_0 .net "b", 0 0, L_00FA1310; 1 drivers
+v00F71118_0 .alias "ci", 0 0, v00F9F248_0;
+v00F70F08_0 .alias "co", 0 0, v00F9ECC8_0;
+v00F71170_0 .net "sum", 0 0, L_00F9F9D8; 1 drivers
+L_00F9F8D0 .part L_00FA10A8, 1, 1;
+L_00F9F9D8 .part L_00FA10A8, 0, 1;
+L_00F9F928 .concat [ 1 1 0 0], L_00FA13C0, C4<0>;
+L_00F9FA88 .concat [ 1 1 0 0], L_00FA1310, C4<0>;
+L_00FA1100 .arith/sum 2, L_00F9F928, L_00F9FA88;
+L_00FA0D90 .concat [ 1 1 0 0], L_00F9FAE0, C4<0>;
+L_00FA10A8 .arith/sum 2, L_00FA1100, L_00FA0D90;
+    .scope S_010B8460;
+T_0 ;
+    %set/v v00F9F038_0, 0, 4;
+    %set/v v00F9F458_0, 0, 4;
+    %set/v v00F9F400_0, 0, 1;
+    %delay 10, 0;
+    %movi 8, 10, 4;
+    %set/v v00F9F038_0, 8, 4;
+    %delay 10, 0;
+    %movi 8, 2, 4;
+    %set/v v00F9F458_0, 8, 4;
+    %delay 10, 0;
+    %set/v v00F9F400_0, 1, 1;
+    %delay 10, 0;
+    %vpi_call 2 55 "$display", "+--------------------------------------------------------+";
+    %vpi_call 2 56 "$finish";
+    %end;
+    .thread T_0;
+    .scope S_010B8460;
+T_1 ;
+    %vpi_call 2 64 "$display", "+--------------------------------------------------------+";
+    %vpi_call 2 65 "$display", "|  r1  |  r2  |  ci  | u0.sum | u1.sum | u2.sum | u3.sum |";
+    %vpi_call 2 66 "$display", "+--------------------------------------------------------+";
+    %vpi_call 2 67 "$monitor", "|  %h   |  %h   |  %h   |    %h    |   %h   |   %h    |   %h    |", v00F9F038_0, v00F9F458_0, v00F9F400_0, v00F70510_0, v00F709E0_0, v00F706C8_0, v00F71170_0;
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "adder_hier.v";
+    "./addbit.v";

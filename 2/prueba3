@@ -1,0 +1,28 @@
+#! /c/iverilog/bin/vvp
+:ivl_version "0.9.7 " "(v0_9_7)";
+:vpi_time_precision + 0;
+:vpi_module "system";
+:vpi_module "v2005_math";
+:vpi_module "va_math";
+S_01113258 .scope module, "arithmetic_operators" "arithmetic_operators" 2 1;
+ .timescale 0 0;
+    .scope S_01113258;
+T_0 ;
+    %vpi_call 2 4 "$display", " 5  +  10 = %d", 5'sb01111;
+    %vpi_call 2 5 "$display", " 5  -  10 = %d", 4'sb1011;
+    %vpi_call 2 6 "$display", " 10 -  5  = %d", 4'sb0101;
+    %vpi_call 2 7 "$display", " 10 *  5  = %d", 7'sb0110010;
+    %vpi_call 2 8 "$display", " 10 /  5  = %d", 3'sb010;
+    %vpi_call 2 9 "$display", " 10 /  -5 = %d", 2'sb10;
+    %vpi_call 2 10 "$display", " 10 %s  3  = %d", "%", 2'sb01;
+    %vpi_call 2 11 "$display", " +5       = %d", 4'sb0101;
+    %vpi_call 2 12 "$display", " -5       = %d", 5'sb11011;
+    %delay 10, 0;
+    %vpi_call 2 13 "$finish";
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 3;
+    "N/A";
+    "<interactive>";
+    "arithmetic_operators.v";
