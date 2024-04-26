@@ -147,7 +147,7 @@ module eth_phy_10g_tb2;
         $dumpvars(0, eth_phy_10g_tb2); // Dump de todas las variables
 
         // Reset inicial
-        tx_rst <= 1'b0;
+        /*tx_rst <= 1'b0;
         rx_rst <= 1'b0;
         #10;
         tx_rst <= 1'b1;
@@ -155,7 +155,25 @@ module eth_phy_10g_tb2;
         #10;
         tx_rst <= 1'b0;
         rx_rst <= 1'b0;
-        #10;
+        #10;*/
+
+        // Inicialización de clocks
+        rx_clk = 1'b0;
+        tx_clk = 1'b0;
+    
+        // Inicialización de resets
+        rx_rst = 1'b1;
+        tx_rst = 1'b1;
+    
+        // Esperar un tiempo suficiente
+        #100;
+    
+        // Desactivar resets
+        rx_rst = 1'b0;
+        tx_rst = 1'b0;
+    
+        // Esperar un tiempo adicional antes de comenzar las operaciones significativas
+        #1000; 
 
         //cfg_tx_prbs31_enable = 1'b0; // Deshabilitar PRBS31 para transmisión
         //cfg_rx_prbs31_enable = 1'b0; // Deshabilitar PRBS31 para recepción
@@ -184,6 +202,13 @@ module eth_phy_10g_tb2;
             // Compara solo si no está en estado de reinicio
             if (xgmii_rxd !== xgmii_txd) begin
                 $display("Error: Datos recibidos no coinciden con los datos transmitidos");
+                $display("Datos transmitidos: %h", xgmii_txd);
+                $display("Datos recibidos: %h", xgmii_rxd);
+            end
+            else begin
+                $display("Datos recibidos coinciden con los datos transmitidos");
+                $display("Datos transmitidos: %h", xgmii_txd);
+                $display("Datos recibidos: %h", xgmii_rxd);
             end
         end
     end

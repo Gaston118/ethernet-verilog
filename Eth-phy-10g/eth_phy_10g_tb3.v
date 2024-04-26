@@ -99,10 +99,29 @@ module eth_phy_10g_tb3;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        #1000 
+        #1000
+
+        #100
+
+        /*// Inicialización de clocks
+        rx_clk = 1'b0;
+        tx_clk = 1'b0;
+    
+        // Inicialización de resets
+        rx_rst = 1'b1;
+        tx_rst = 1'b1;
+    
+        // Esperar un tiempo suficiente
+        #100;
+    
+        // Desactivar resets
+        rx_rst = 1'b0;
+        tx_rst = 1'b0;
+    
+        #1000; // Ajusta este valor según sea necesario*/
 
         // Verificar resultados
-        
+
         if (rx_bad_block)
             $display("Error en bloque recibido");
         
@@ -127,12 +146,21 @@ module eth_phy_10g_tb3;
         $finish;
     end
 
+    always @(posedge tx_clk) begin
+    if (!tx_rst) begin
+        xgmii_txd <= serdes_tx_data;
+        // Mostrar valores de datos después de la asignación a xgmii_txd
+        $display("----ASIGNACION----");
+        $display("serdes_tx_data = %h, xgmii_txd = %h", serdes_tx_data, xgmii_txd);
+        end
+    end
+
     // Validación: Compara los datos recibidos con los datos transmitidos
     always @(posedge rx_clk) begin
         if (!rx_rst) begin
             // Compara solo si no está en estado de reinicio
             if (xgmii_rxd !== xgmii_txd) begin
-                $display("Error: Datos recibidos no coinciden con los datos transmitidos");
+                $display("ERROR --> ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
             end
         end
     end
