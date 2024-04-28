@@ -81,6 +81,7 @@ module eth_phy_10g_tb3;
             #5 tx_clk = ~tx_clk;
     end
 
+
     // Generador de datos PRBS31 para xgmii_txd
     initial begin
         $dumpfile("eth_phy_10g_tb3.vcd");
@@ -99,26 +100,7 @@ module eth_phy_10g_tb3;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        #1000
-
         #100
-
-        /*// Inicialización de clocks
-        rx_clk = 1'b0;
-        tx_clk = 1'b0;
-    
-        // Inicialización de resets
-        rx_rst = 1'b1;
-        tx_rst = 1'b1;
-    
-        // Esperar un tiempo suficiente
-        #100;
-    
-        // Desactivar resets
-        rx_rst = 1'b0;
-        tx_rst = 1'b0;
-    
-        #1000; // Ajusta este valor según sea necesario*/
 
         // Verificar resultados
 
@@ -151,7 +133,15 @@ module eth_phy_10g_tb3;
         xgmii_txd <= serdes_tx_data;
         // Mostrar valores de datos después de la asignación a xgmii_txd
         $display("----ASIGNACION----");
-        $display("serdes_tx_data = %h, xgmii_txd = %h", serdes_tx_data, xgmii_txd);
+        $display("serdes_tx_data = %h --> xgmii_txd = %h", serdes_tx_data, xgmii_txd);
+        end
+    end
+
+    always @(posedge rx_clk) begin
+        if (!rx_rst) begin
+            // Mostrar valores de datos recibidos
+            $display("----RECEPCION----");
+            $display("serdes_rx_data = %h, serdes_rx_hdr = %h", serdes_rx_data, serdes_rx_hdr);
         end
     end
 
@@ -160,7 +150,10 @@ module eth_phy_10g_tb3;
         if (!rx_rst) begin
             // Compara solo si no está en estado de reinicio
             if (xgmii_rxd !== xgmii_txd) begin
-                $display("ERROR --> ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
+                $display("ERROR: ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
+            end
+            else begin
+                $display("OK: ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
             end
         end
     end
