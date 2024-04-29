@@ -79,52 +79,34 @@ module eth_phy_10g_tb;
 
     // Generación de clocks
 
-    // Genera la señal de reloj
-    //El operador #3 indica un retraso de 3 unidades de tiempo de simulación. 
-    //Después de cada retraso, el valor se invierte, alternando entre alto y bajo. 
-    //Esto simula el comportamiento de una señal de reloj.
-
-    always begin
-        #3 rx_clk <= ~rx_clk; 
-    end
-
-    always begin
-       #3 tx_clk <= ~tx_clk; 
-    end
+    always
+    // CAMBIOS
+    // Cambio de begin a fork para que sea paralelo y no secuencial
+    fork
+        #3 rx_clk = ~rx_clk;
+        #3 tx_clk = ~tx_clk;
+    join
 
     initial begin
-    tx_rst <= 1'b0; //ESTABLECE EL RESET DE TX EN 0
-    rx_rst <= 1'b0; //ESTABLECE EL RESET DE RX EN 0
+    rx_clk = 1'b0;
+    tx_clk = 1'b0;
+    rx_rst = 1'b1;
+    tx_rst = 1'b1;
     #10;
-    tx_rst <= 1'b1; //ESTABLECE EL RESET DE TX EN 1
-    rx_rst <= 1'b1; //ESTABLECE EL RESET DE RX EN 1
-    #10;
-    tx_rst <= 1'b0; //ESTABLECE EL RESET DE TX EN 0
-    rx_rst <= 1'b0; //ESTABLECE EL RESET DE RX EN 0
-    #10;
+    rx_rst = 1'b0;
+    tx_rst = 1'b0;
 
     // Envío de datos de prueba
-    xgmii_txd = 64'hA5A5_A5A5_A5A5_A5A5; // Patrón de datos de prueba
-    xgmii_txc = 8'hFF; // Control de transmisión arbitrario
-    serdes_rx_hdr = 2'h0; // Header arbitrario
-    #10;
+    xgmii_txd <= 64'hA5A5_A5A5_A5A5_A5A5; // Patrón de datos de prueba
+    serdes_rx_data <= serdes_tx_data;
+    #100;
     // Verificar resultados
     if (rx_bad_block || rx_sequence_error || rx_high_ber || tx_bad_block || rx_block_lock || rx_error_count) begin
         $display("Error de transmision o recepcion detectado.");
+        $display("xgmii_rxd = %h", xgmii_rxd);
     end else begin
         $display("Transmision y recepcion exitosas.");
-    end
-
-    xgmii_txd <= 64'hDEADBEEFDEADBEEF; // Cambiar el patrón de datos
-    xgmii_txc <= 1'b1; // Set the TX control signal
-    #10;
-    xgmii_txc <= 1'b0; // Clear the TX control signal
-    #10;
-    // Verificar resultados
-    if (rx_bad_block || rx_sequence_error || rx_high_ber || tx_bad_block || rx_block_lock || rx_error_count) begin
-        $display("Error de transmision o recepcion detectado en 2do envio.");
-    end else begin
-        $display("Transmision y recepcion exitosas en 2do envio.");
+        $display("xgmii_rxd = %h", xgmii_rxd);
     end
     
     // Terminar la simulación

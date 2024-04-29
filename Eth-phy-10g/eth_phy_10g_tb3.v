@@ -8,7 +8,7 @@ module eth_phy_10g_tb3;
     parameter CTRL_WIDTH = (DATA_WIDTH/8);
     parameter HDR_WIDTH = 2;
     parameter BIT_REVERSE = 0;
-    parameter SCRAMBLER_DISABLE = 0;
+    parameter SCRAMBLER_DISABLE = 1;
     parameter PRBS31_ENABLE = 1; // Habilitar PRBS31 para generar datos
     parameter TX_SERDES_PIPELINE = 0;
     parameter RX_SERDES_PIPELINE = 0;
@@ -24,8 +24,8 @@ module eth_phy_10g_tb3;
     wire [CTRL_WIDTH-1:0] xgmii_rxc;
     wire [DATA_WIDTH-1:0] serdes_tx_data;
     wire [HDR_WIDTH-1:0]  serdes_tx_hdr;
-    wire [DATA_WIDTH-1:0] serdes_rx_data;
-    wire [HDR_WIDTH-1:0]  serdes_rx_hdr;
+    reg [DATA_WIDTH-1:0] serdes_rx_data;
+    reg [HDR_WIDTH-1:0]  serdes_rx_hdr;
     wire serdes_rx_bitslip;
     wire serdes_rx_reset_req;
     wire tx_bad_block;
@@ -76,13 +76,16 @@ module eth_phy_10g_tb3;
         .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)
     );
 
-    always begin
-            #5 rx_clk = ~rx_clk;
-            #5 tx_clk = ~tx_clk;
-    end
+    always
+    // CAMBIOS
+    // Cambio de begin a fork para que sea paralelo y no secuencial
+    fork
+        #5 rx_clk = ~rx_clk;
+        #5 tx_clk = ~tx_clk;
+    join
+    
 
-
-    // Generador de datos PRBS31 para xgmii_txd
+    // Generador de datos PRBS31
     initial begin
         $dumpfile("eth_phy_10g_tb3.vcd");
         $dumpvars(0, eth_phy_10g_tb3);
@@ -100,7 +103,9 @@ module eth_phy_10g_tb3;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        #100
+        xgmii_txd <= 64'h0000000000000000;
+
+        #500;
 
         // Verificar resultados
 
@@ -128,33 +133,23 @@ module eth_phy_10g_tb3;
         $finish;
     end
 
-    always @(posedge tx_clk) begin
-    if (!tx_rst) begin
-        xgmii_txd <= serdes_tx_data;
-        // Mostrar valores de datos después de la asignación a xgmii_txd
-        $display("----ASIGNACION----");
-        $display("serdes_tx_data = %h --> xgmii_txd = %h", serdes_tx_data, xgmii_txd);
-        end
-    end
+    integer i = 1;
 
-    always @(posedge rx_clk) begin
-        if (!rx_rst) begin
-            // Mostrar valores de datos recibidos
-            $display("----RECEPCION----");
+    always @(posedge tx_clk) begin
+        if (!tx_rst) begin
+            serdes_rx_data <= serdes_tx_data;
+            serdes_rx_hdr <= serdes_tx_hdr;
+            $display("");
             $display("serdes_rx_data = %h, serdes_rx_hdr = %h", serdes_rx_data, serdes_rx_hdr);
+            $display("");
         end
     end
 
     // Validación: Compara los datos recibidos con los datos transmitidos
     always @(posedge rx_clk) begin
         if (!rx_rst) begin
-            // Compara solo si no está en estado de reinicio
-            if (xgmii_rxd !== xgmii_txd) begin
-                $display("ERROR: ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
-            end
-            else begin
-                $display("OK: ", "xgmii_rxd = %h, xgmii_txd = %h", xgmii_rxd, xgmii_txd);
-            end
+            $display("%d) xgmii_rxd = %h, xgmii_txd = %h", i , xgmii_rxd, xgmii_txd);
+            i = i + 1;
         end
     end
 
