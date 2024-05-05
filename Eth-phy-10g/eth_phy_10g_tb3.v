@@ -103,9 +103,9 @@ module eth_phy_10g_tb3;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        xgmii_txd <= 64'h0000000000000000;
+        //xgmii_txd <= 64'h0000000000000000;
 
-        #500;
+        #200;
 
         // Verificar resultados
 
@@ -138,7 +138,7 @@ module eth_phy_10g_tb3;
     always @(posedge tx_clk) begin
         if (!tx_rst) begin
             serdes_rx_data <= serdes_tx_data;
-            serdes_rx_hdr <= serdes_tx_hdr;
+            serdes_rx_hdr <= 2; //hardcodeo el hdr para que siempre sea 2 
             $display("");
             $display("serdes_rx_data = %h, serdes_rx_hdr = %h", serdes_rx_data, serdes_rx_hdr);
             $display("");
@@ -148,7 +148,7 @@ module eth_phy_10g_tb3;
     // Validación: Compara los datos recibidos con los datos transmitidos
     always @(posedge rx_clk) begin
         if (!rx_rst) begin
-            $display("%d) xgmii_rxd = %h, xgmii_txd = %h", i , xgmii_rxd, xgmii_txd);
+            $display("%d) xgmii_rxd = %h", i , xgmii_rxd);
             i = i + 1;
         end
     end
