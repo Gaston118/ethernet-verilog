@@ -83,6 +83,9 @@ module eth_phy_10g_tb3;
         #5 rx_clk = ~rx_clk;
         #5 tx_clk = ~tx_clk;
     join
+
+integer expected_data_count = 21; // Número esperado de datos recibidos
+integer received_data_count = 0; // Contador para datos recibidos
     
 
     // Generador de datos PRBS31
@@ -103,9 +106,14 @@ module eth_phy_10g_tb3;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        //xgmii_txd <= 64'h0000000000000000;
-
         #200;
+
+        cfg_tx_prbs31_enable = 1'b0;
+        cfg_rx_prbs31_enable = 1'b0;
+
+        while (received_data_count < expected_data_count) begin
+            #1; // Esperar un ciclo
+        end
 
         // Verificar resultados
 
@@ -148,6 +156,9 @@ module eth_phy_10g_tb3;
     // Validación: Compara los datos recibidos con los datos transmitidos
     always @(posedge rx_clk) begin
         if (!rx_rst) begin
+            if (xgmii_rxd !== 64'hfefefefefefefefe) begin
+            received_data_count = received_data_count + 1;
+            end
             $display("%d) xgmii_rxd = %h", i , xgmii_rxd);
             i = i + 1;
         end
