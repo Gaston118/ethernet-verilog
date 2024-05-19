@@ -106,31 +106,42 @@ module eth_phy_10g_LL1;
         if (!tx_rst) begin
             for (i = 0; i < 6; i = i + 1) begin
                 xgmii_txd <= test_patterns[i];
-                #10
-                serdes_rx_data <= xgmii_txd;
+                #10;
+                serdes_rx_data <= serdes_tx_data;
                 //serdes_rx_hdr = 2'b01;
                 serdes_rx_hdr <= 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
+                $display("----------------------------------------------------------------------");
+                $display("serdes_tx_data = %h, serdes_tx_hdr = %h", serdes_tx_data, serdes_tx_hdr);
                 $display("");
                 $display("serdes_rx_data = %h, serdes_rx_hdr = %h", serdes_rx_data, serdes_rx_hdr);
-                $display("");
+                $display("----------------------------------------------------------------------");
             end
         end
     end
 
     always @(posedge rx_clk) begin
         if (!rx_rst) begin 
+            $display("");
             $display("xgmii_rxd = %h", xgmii_rxd);
-            /*for (j = 0; j < 6; j = j + 1) begin
-                if (xgmii_rxd === test_patterns[j]) begin
-                    $display("PATRON CORRECTO: %h", test_patterns[j]);
-                end
-            end*/
+            $display("");
+        end
+    end
+
+    always @(posedge rx_clk) begin
+        if (!rx_rst) begin 
+            $display("");
+            $display("Time: %t ", $time);
+            $display("rx_block_lock: %b | rx_high_ber: %b | rx_status: %b | rx_error_count: %d", rx_block_lock, rx_high_ber, rx_status, rx_error_count);
+            $display("");
         end
     end
 
     initial begin
         $dumpfile("tb/eth_phy_10g_ll1.vcd");
         $dumpvars(0, eth_phy_10g_LL1);
+
+        cfg_rx_prbs31_enable <= 1'b0;
+        cfg_tx_prbs31_enable <= 1'b0;
 
         rx_clk = 1'b0;
         tx_clk = 1'b0;
@@ -140,7 +151,19 @@ module eth_phy_10g_LL1;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        #150;
+        xgmii_txd = {test_patterns[1]};
+        xgmii_txc = 8'h00;
+
+        #1000;
+
+        $display("");
+        $display("Final State:");
+        $display("rx_block_lock: %b", rx_block_lock);
+        $display("rx_high_ber: %b", rx_high_ber);
+        $display("rx_status: %b", rx_status);
+        $display("rx_error_count: %d", rx_error_count);
+        $display("serdes_rx_bitslip: %b", serdes_rx_bitslip);
+        $display("");
 
         if(!rx_block_lock) begin
             $display("BLOCK LOCK FAIL");
