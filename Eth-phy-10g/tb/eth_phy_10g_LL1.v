@@ -132,6 +132,8 @@ module eth_phy_10g_LL1;
             $display("");
             $display("Time: %t ", $time);
             $display("rx_block_lock: %b | rx_high_ber: %b | rx_status: %b | rx_error_count: %d", rx_block_lock, rx_high_ber, rx_status, rx_error_count);
+            $display("ber_count: %d", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg);
+            $display("status_count: %h", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.status_count_reg);
             $display("");
         end
     end
@@ -154,7 +156,15 @@ module eth_phy_10g_LL1;
         xgmii_txd = {test_patterns[1]};
         xgmii_txc = 8'h00;
 
-        #1000;
+        #100;
+        
+        rx_rst = 1'b1;
+        tx_rst = 1'b1;
+        #10;
+        rx_rst = 1'b0;
+        tx_rst = 1'b0;
+
+        #800;
 
         $display("");
         $display("Final State:");
@@ -163,6 +173,8 @@ module eth_phy_10g_LL1;
         $display("rx_status: %b", rx_status);
         $display("rx_error_count: %d", rx_error_count);
         $display("serdes_rx_bitslip: %b", serdes_rx_bitslip);
+        $display("ber_count: %d", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg);
+        $display("status_count: %h", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.status_count_reg);
         $display("");
 
         if(!rx_block_lock) begin
@@ -176,6 +188,9 @@ module eth_phy_10g_LL1;
         end
         if(serdes_rx_bitslip) begin
             $display("BITSLiP FAIL");
+        end
+        if(dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg!==0) begin
+            $display("BER COUNT FAIL");
         end
 
         if(rx_error_count!==0) begin
