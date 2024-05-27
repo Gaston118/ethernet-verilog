@@ -126,14 +126,17 @@ module eth_phy_10g_LL1;
             $display("");
         end
     end
-
+    
     always @(posedge rx_clk) begin
         if (!rx_rst) begin 
             $display("");
             $display("Time: %t ", $time);
             $display("rx_block_lock: %b | rx_high_ber: %b | rx_status: %b | rx_error_count: %d", rx_block_lock, rx_high_ber, rx_status, rx_error_count);
             $display("ber_count: %d", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg);
+            
             $display("status_count: %h", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.status_count_reg);
+            $display("error_count_reg: %b", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.error_count_reg);
+            $display("time_count_reg: %t", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.time_count_reg);
             $display("");
         end
     end
@@ -197,6 +200,7 @@ module eth_phy_10g_LL1;
             $display("ERROR COUNT FAIL");
         end
 
+        $display("");
         $finish;
     end
 
