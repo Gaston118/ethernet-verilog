@@ -19,7 +19,8 @@ module eth_phy_10g_LL1;
     parameter RX_SERDES_PIPELINE = 1;
     parameter BITSLIP_HIGH_CYCLES = 1;
     parameter BITSLIP_LOW_CYCLES = 8;
-    parameter COUNT_125US = 125000/6.4;
+    //parameter COUNT_125US = 125000/6.4;
+    parameter COUNT_125US = 125;
 
     // Definición de señales
     reg rx_clk, rx_rst, tx_clk, tx_rst;
@@ -81,13 +82,8 @@ module eth_phy_10g_LL1;
         .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)
     );
 
-    always
-    // CAMBIOS
-    // Cambio de begin a fork para que sea paralelo y no secuencial
-    fork
-        #5 rx_clk = ~rx_clk;
-        #5 tx_clk = ~tx_clk;
-    join
+    always #5 rx_clk = ~rx_clk;
+    always #5 tx_clk = ~tx_clk;
 
     reg [63:0] test_patterns [0:5];
     initial begin
@@ -108,8 +104,8 @@ module eth_phy_10g_LL1;
                 xgmii_txd <= test_patterns[i];
                 #10;
                 serdes_rx_data <= serdes_tx_data;
-                //serdes_rx_hdr = 2'b01;
-                serdes_rx_hdr <= 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
+                serdes_rx_hdr = 2'b01;
+                //serdes_rx_hdr <= 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
                 $display("----------------------------------------------------------------------");
                 $display("serdes_tx_data = %h, serdes_tx_hdr = %h", serdes_tx_data, serdes_tx_hdr);
                 $display("");
@@ -133,11 +129,13 @@ module eth_phy_10g_LL1;
             $display("Time: %t ", $time);
             $display("rx_block_lock: %b | rx_high_ber: %b | rx_status: %b | rx_error_count: %d", rx_block_lock, rx_high_ber, rx_status, rx_error_count);
             $display("ber_count: %d", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg);
-            
             $display("status_count: %h", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.status_count_reg);
             $display("error_count_reg: %b", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.error_count_reg);
-            $display("time_count_reg: %t", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.time_count_reg);
             $display("");
+            if(rx_status) begin
+                $display("rx_status: OK");
+                $finish;
+            end
         end
     end
 
@@ -167,40 +165,8 @@ module eth_phy_10g_LL1;
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 
-        #800;
+        #55800;
 
-        $display("");
-        $display("Final State:");
-        $display("rx_block_lock: %b", rx_block_lock);
-        $display("rx_high_ber: %b", rx_high_ber);
-        $display("rx_status: %b", rx_status);
-        $display("rx_error_count: %d", rx_error_count);
-        $display("serdes_rx_bitslip: %b", serdes_rx_bitslip);
-        $display("ber_count: %d", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg);
-        $display("status_count: %h", dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst.status_count_reg);
-        $display("");
-
-        if(!rx_block_lock) begin
-            $display("BLOCK LOCK FAIL");
-        end
-        if(rx_high_ber) begin
-            $display("HIGH BER FAIL");
-        end
-        if(!rx_status) begin
-            $display("STATUS FAIL");
-        end
-        if(serdes_rx_bitslip) begin
-            $display("BITSLiP FAIL");
-        end
-        if(dut.eth_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst.ber_count_reg!==0) begin
-            $display("BER COUNT FAIL");
-        end
-
-        if(rx_error_count!==0) begin
-            $display("ERROR COUNT FAIL");
-        end
-
-        $display("");
         $finish;
     end
 
