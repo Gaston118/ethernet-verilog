@@ -109,8 +109,9 @@ module eth_phy_10g_LL8;
                 //serdes_rx_hdr = 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
 
                 for (k=0; k<64; k=k+1) begin
+                    #10
                     serdes_rx_hdr = 2'b10;
-                    if(k == 63) begin
+                    if(k == 62) begin
                         serdes_rx_hdr = 2'b11;
                     end
                 end
