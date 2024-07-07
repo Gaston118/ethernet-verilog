@@ -43,6 +43,7 @@ module tb1;
       
         i_reset = 1'b0;
         clock = 1'b1;
+        i_sw = 4'b0000;
         #20;
 
         i_reset = 1'b1;
@@ -50,9 +51,6 @@ module tb1;
 
         i_reset = 1'b0;
         #20;
-
-        i_sw = 4'b0000;
-        #50;
 
         i_sw = 4'b0001;
         #500;

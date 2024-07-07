@@ -24,8 +24,8 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 
-`include "xgmii_baser_dec_64.v"
 `include "eth_phy_10g_rx_if.v"
+`include "xgmii_baser_dec_64.v"
 
 `resetall
 `timescale 1ns / 1ps

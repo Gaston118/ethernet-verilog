@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 `include "eth_phy_10g.v"
 
+//VERIFICAMOS FUNCIONAMIENTO GENERAL HASTA ACTIVAR RX STATUS
+
 //-----------------------------------------------------
 //iverilog -o tb/ll1 tb/eth_phy_10g_LL1.v
 //vvp tb/ll1
