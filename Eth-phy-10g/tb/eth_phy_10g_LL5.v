@@ -114,21 +114,21 @@ module eth_phy_10g_LL5;
                 //serdes_rx_hdr = 2'b01; //CON 1 SE ACTIVA EL RX STATUS
                 //serdes_rx_hdr = 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
 
-                random_number = $urandom%100;
+                random_number <= $urandom%100;
 
                 $display("Numero: %0d", random_number);
 
                 if(random_number<=2) begin
-                    serdes_rx_hdr = 2'b11;
-                    invalid = invalid + 1;
-                    seguidos = 0;
+                    serdes_rx_hdr <= 2'b11;
+                    invalid <= invalid + 1;
+                    seguidos <= 0;
                 end
                 else begin
-                    serdes_rx_hdr = 2'b01;
-                    valid = valid + 1;
-                    seguidos = seguidos + 1;
+                    serdes_rx_hdr <= 2'b01;
+                    valid <= valid + 1;
+                    seguidos <= seguidos + 1;
                     if (seguidos == 64) begin
-                        count=count+1;
+                        count<=count+1;
                     end
                 end
 
@@ -174,14 +174,15 @@ module eth_phy_10g_LL5;
         $dumpfile("tb/eth_phy_10g_ll5.vcd");
         $dumpvars(0, eth_phy_10g_LL5);
 
-        cfg_rx_prbs31_enable <= 1'b0;
-        cfg_tx_prbs31_enable <= 1'b0;
+        cfg_rx_prbs31_enable = 1'b0;
+        cfg_tx_prbs31_enable = 1'b0;
 
         rx_clk = 1'b0;
         tx_clk = 1'b0;
         rx_rst = 1'b1;
         tx_rst = 1'b1;
-        #10;
+        #100;
+        @(posedge tx_clk);
         rx_rst = 1'b0;
         tx_rst = 1'b0;
 

@@ -85,7 +85,7 @@ module eth_phy_10g_LL1;
     );
 
     always #5 rx_clk = ~rx_clk;
-    always #5 tx_clk = ~tx_clk;
+    always #10 tx_clk = ~tx_clk;
 
     reg [63:0] test_patterns [0:5];
     initial begin
@@ -106,7 +106,7 @@ module eth_phy_10g_LL1;
                 xgmii_txd <= test_patterns[i];
                 #10;
                 serdes_rx_data <= serdes_tx_data;
-                serdes_rx_hdr = 2'b01;
+                serdes_rx_hdr <= 2'b01;
                 //serdes_rx_hdr <= 2'b10; //LOS DATOS SOLO LLEGAN BIEN SI ES 2
                 $display("----------------------------------------------------------------------");
                 $display("serdes_tx_data = %h, serdes_tx_hdr = %h", serdes_tx_data, serdes_tx_hdr);
@@ -145,19 +145,23 @@ module eth_phy_10g_LL1;
         $dumpfile("tb/eth_phy_10g_ll1.vcd");
         $dumpvars(0, eth_phy_10g_LL1);
 
-        cfg_rx_prbs31_enable <= 1'b0;
-        cfg_tx_prbs31_enable <= 1'b0;
+        cfg_rx_prbs31_enable = 1'b0;
+        cfg_tx_prbs31_enable = 1'b0;
+
+        xgmii_txd = {test_patterns[1]};
+        xgmii_txc = 8'h00;
+        serdes_rx_data = 64'h0000000000000000;
 
         rx_clk = 1'b0;
         tx_clk = 1'b0;
         rx_rst = 1'b1;
         tx_rst = 1'b1;
-        #10;
-        rx_rst = 1'b0;
+        #1000;
+        @(posedge tx_clk);
         tx_rst = 1'b0;
-
-        xgmii_txd = {test_patterns[1]};
-        xgmii_txc = 8'h00;
+        #1000;
+        @(posedge rx_clk);
+        rx_rst = 1'b0;
 
         #100;
         
