@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `include "eth_phy_10g_rx_if.v"
 `include "xgmii_baser_dec_64.v"
+`include "eth_phy_10g_rx_aligner.v"
 
 `resetall
 `timescale 1ns / 1ps
@@ -39,6 +40,7 @@ module eth_phy_10g_rx #
     parameter DATA_WIDTH = 64,
     parameter CTRL_WIDTH = (DATA_WIDTH/8),
     parameter HDR_WIDTH = 2,
+    parameter FRAME_WIDTH = 66,
     parameter BIT_REVERSE = 0,
     parameter SCRAMBLER_DISABLE = 0,
     parameter PRBS31_ENABLE = 0,
@@ -60,8 +62,8 @@ module eth_phy_10g_rx #
     /*
      * SERDES interface
      */
-    input  wire [DATA_WIDTH-1:0] serdes_rx_data,
-    input  wire [HDR_WIDTH-1:0]  serdes_rx_hdr,
+    input  wire [FRAME_WIDTH-1:0] serdes_rx_data,
+    //input  wire [HDR_WIDTH-1:0]  serdes_rx_hdr,
     output wire                  serdes_rx_bitslip,
     output wire                  serdes_rx_reset_req,
 
@@ -72,6 +74,7 @@ module eth_phy_10g_rx #
     output wire                  rx_bad_block,
     output wire                  rx_sequence_error,
     output wire                  rx_block_lock,
+    output wire                  o_rx_block_lock,
     output wire                  rx_high_ber,
     output wire                  rx_status,
 
@@ -102,6 +105,23 @@ end
 wire [DATA_WIDTH-1:0] encoded_rx_data;
 wire [HDR_WIDTH-1:0]  encoded_rx_hdr;
 
+wire [DATA_WIDTH-1:0] connector_serdes_rx_data;
+wire [HDR_WIDTH-1:0]  connector_serdes_rx_hdr;
+
+eth_phy_10g_rx_aligner #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .HDR_WIDTH(HDR_WIDTH),
+    .FRAME_WIDTH(FRAME_WIDTH)
+)
+eth_phy_10g_rx_aligner_inst (
+    .clk(clk),
+    .i_rst(rst),
+    .i_serdes_rx(serdes_rx_data),
+    .o_serdes_rx_data(connector_serdes_rx_data),
+    .o_serdes_rx_hdr(connector_serdes_rx_hdr),
+    .o_rx_block_lock(o_rx_block_lock)
+);
+
 eth_phy_10g_rx_if #(
     .DATA_WIDTH(DATA_WIDTH),
     .HDR_WIDTH(HDR_WIDTH),
@@ -118,8 +138,8 @@ eth_phy_10g_rx_if_inst (
     .rst(rst),
     .encoded_rx_data(encoded_rx_data),
     .encoded_rx_hdr(encoded_rx_hdr),
-    .serdes_rx_data(serdes_rx_data),
-    .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_data(connector_serdes_rx_data),
+    .serdes_rx_hdr(connector_serdes_rx_hdr),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(serdes_rx_reset_req),
     .rx_bad_block(rx_bad_block),
