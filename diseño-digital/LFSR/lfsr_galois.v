@@ -3,9 +3,11 @@ module lfsr_galois(
   input wire        i_valid,      // Señal de validación para generar nueva secuencia
   input wire        i_rst,        // Reset asincrónico para inicializar con la semilla fija
   input wire        i_soft_reset, // Reset sincrónico para inicializar con la semilla del puerto
-  input wire [7:0]  i_seed,       // Semilla inicial proporcionada desde el puerto
-  output reg [7:0]  o_lfsr        // Salida del registro LFSR
+  input wire [7:0]  i_seed       // Semilla inicial proporcionada desde el puerto
 );
+
+// Salida del registro LFSR
+wire [7:0]  o_lfsr;
 
 // Registro para el estado actual del LFSR
 reg [7:0] lfsr_reg;
