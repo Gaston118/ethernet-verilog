@@ -14,7 +14,7 @@ reg [7:0] lfsr_reg;
 reg [7:0] seed_reg = 8'b00000001;
 
 // Feedback del LFSR
-wire feedback = lfsr_reg[7];
+wire feedback = lfsr_reg[7] ^ (lfsr_reg[6:0]==7'b0000000);
 
 always @(posedge clk or posedge i_rst) begin
 

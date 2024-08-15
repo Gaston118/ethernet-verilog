@@ -20,7 +20,8 @@ module lfsr_galois_tb1;
     .i_valid(i_valid),
     .i_rst(i_rst),
     .i_soft_reset(i_soft_reset),
-    .i_seed(i_seed)
+    .i_seed(i_seed),
+    .o_lfsr(o_lfsr)
   );
 
   // 10MHz = 100ns
@@ -47,7 +48,7 @@ initial begin
 
     #1000;
 
-    random_valid;
+    random_valid;  
 
     #1000;
 
@@ -57,24 +58,24 @@ end
   task async_reset;
     reg [7:0] random_reset;
     begin
-      random_reset <= $urandom%100;  
+      random_reset <= $urandom_range(1, 2000);  
       #10;
       $display("Numero: %0d", random_reset);
       i_rst = 1;
       #random_reset; 
-      i_rst = 0;
+      @(posedge clk) i_rst = 0;
     end
   endtask
 
   task soft_reset;
     reg [7:0] random_soft_reset;
     begin
-      random_soft_reset <= $urandom%100; 
+      random_soft_reset <= $urandom_range(1, 2000); 
       #10; 
       $display("Numero: %0d", random_soft_reset);
       i_soft_reset = 1;
       #random_soft_reset;
-      i_soft_reset = 0;
+      @(posedge clk) i_soft_reset = 0;
     end
   endtask
 
@@ -88,7 +89,8 @@ end
   integer i;
   task random_valid;
     begin
-      for (i = 0; i < 100; i = i + 1) begin
+      for(i = 0; i < 100; i = i + 1) begin
+        @(posedge clk);
         i_valid = $random % 2; // 0 o 1
         #100; 
       end
