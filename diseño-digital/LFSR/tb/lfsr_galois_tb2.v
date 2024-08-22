@@ -108,11 +108,11 @@ end
       repeated = 0;
 
       #50 initial_value = o_lfsr;
-      #100 cycle_count = 0;
+      cycle_count = 0;
       
       while(!repeated) begin
         @(posedge clk) cycle_count = cycle_count + 1;
-        
+        #1;
         if(o_lfsr == initial_value && cycle_count>1) begin
           repeated = 1;
           i_valid = 0;
