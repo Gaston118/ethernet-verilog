@@ -52,7 +52,8 @@ lfsr_checker u_lfsr_checker(
     .i_rst(i_rst),
     .i_lfsr(o_lfsr),
     .i_seed_reg(seed_reg),   
-    .o_lock(o_lock)
+    .o_lock(o_lock),
+    .i_valid(i_valid)
   );
 
 endmodule

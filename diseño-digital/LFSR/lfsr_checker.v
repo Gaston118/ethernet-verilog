@@ -3,7 +3,8 @@ module lfsr_checker(
   input  wire         i_rst,      
   input  wire  [7:0]  i_lfsr,
   input  wire  [7:0]  i_seed_reg, 
-  output wire         o_lock   
+  output wire         o_lock,
+  input wire          i_valid 
 );
 
   reg [7:0] expected_lfsr;
@@ -24,7 +25,7 @@ module lfsr_checker(
       valid_count   <= 0;
       invalid_count <= 0;
 
-    end else begin
+    end else if(i_valid) begin
 
       if (i_lfsr == expected_lfsr) begin
       
