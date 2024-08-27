@@ -1,9 +1,12 @@
 `timescale 1ns / 1ps
-`include "lfsr_galois.v"
+`include "top.v"
+
+// CHECKEO FUNCIONALIDAD GENERAL CON EL CHEKCKER.
 
 //-----------------------------------------------------
-//iverilog -o tb/tb1 tb/lfsr_galois_tb1.v
-//vvp tb/tb1
+// iverilog -o tb/tb1 tb/lfsr_galois_tb1.v
+// vvp tb/tb1
+// gtkwave tb/lfsr_galois_tb1.vcd
 //-----------------------------------------------------
 
 module lfsr_galois_tb1;
@@ -13,15 +16,17 @@ module lfsr_galois_tb1;
   reg i_rst;
   reg i_soft_reset;
   reg [7:0] i_seed;
-  wire [7:0] o_lfsr;
+  wire [7:0] connect_lfsr;
+  wire o_lock;
 
-  lfsr_galois dut (
+  top dut (
     .clk(clk),
     .i_valid(i_valid),
     .i_rst(i_rst),
     .i_soft_reset(i_soft_reset),
     .i_seed(i_seed),
-    .o_lfsr(o_lfsr)
+    .o_lock(o_lock),
+    .connect_lfsr(connect_lfsr)
   );
 
   // 10MHz = 100ns

@@ -1,5 +1,3 @@
-`include "lfsr_checker.v"
-`include "lfsr_checker_2.v"
 
 module lfsr_galois(
   input   wire        clk,          // Reloj del sistema
@@ -7,8 +5,7 @@ module lfsr_galois(
   input   wire        i_rst,        // Reset asincrónico para inicializar con la semilla fija
   input   wire        i_soft_reset, // Reset sincrónico para inicializar con la semilla del puerto
   input   wire [7:0]  i_seed,       // Semilla inicial proporcionada desde el puerto
-  output  wire [7:0]  o_lfsr,       // Salida de la secuencia generada
-  output  wire        o_lock        // Señal de bloqueo del checker
+  output  wire [7:0]  o_lfsr        // Salida de la secuencia generada
 );
 
 // Registro para el estado actual del LFSR
@@ -46,15 +43,6 @@ always @(posedge clk or posedge i_rst) begin
 end
 
 assign o_lfsr = lfsr_reg;
-
-lfsr_checker u_lfsr_checker(
-    .clk(clk),
-    .i_rst(i_rst),
-    .i_lfsr(o_lfsr),
-    .i_seed_reg(seed_reg),   
-    .o_lock(o_lock),
-    .i_valid(i_valid)
-  );
 
 endmodule
 

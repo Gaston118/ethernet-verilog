@@ -4,7 +4,7 @@ module lfsr_checker(
   input  wire  [7:0]  i_lfsr,
   input  wire  [7:0]  i_seed_reg, 
   output wire         o_lock,
-  input wire          i_valid 
+  input wire          i_valid
 );
 
   reg [7:0] expected_lfsr;
