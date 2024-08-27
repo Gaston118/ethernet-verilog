@@ -1,15 +1,14 @@
 `timescale 1ns / 1ps
 `include "top.v"
 
-// CHECKEO FUNCIONALIDAD GENERAL CON EL CHEKCKER.
-
+// CHECKEO FRONTERAS DE SECUENCIA DE BLOQUEO.
 //-----------------------------------------------------
-// iverilog -o tb/tb1 tb/lfsr_galois_tb1.v
-// vvp tb/tb1
-// gtkwave tb/lfsr_galois_tb1.vcd
+// iverilog -o tb/tb4 tb/lfsr_galois_tb4.v
+// vvp tb/tb4
+// gtkwave tb/lfsr_galois_tb4.vcd
 //-----------------------------------------------------
 
-module lfsr_galois_tb1;
+module lfsr_galois_tb4;
 
   reg clk;
   reg i_valid;
@@ -34,8 +33,8 @@ module lfsr_galois_tb1;
   always #50 clk = ~clk;
 
 initial begin
-    $dumpfile("tb/lfsr_galois_tb1.vcd");
-    $dumpvars(0, lfsr_galois_tb1);
+    $dumpfile("tb/lfsr_galois_tb4.vcd");
+    $dumpvars(0, lfsr_galois_tb4);
     
     clk = 0;
     i_valid = 0;
@@ -56,6 +55,16 @@ initial begin
 
     random_valid;  
 
+    #1000;
+
+    dos_valid_un_invalid;
+    #100;
+    dos_valid_un_invalid;
+    #100;
+    dos_valid_un_invalid;
+    #1000;
+
+    cinco_validos_tres_invalidos;
     #1000;
 
     $finish;
@@ -100,6 +109,28 @@ end
         i_valid = $random % 2; // 0 o 1
         #100; 
       end
+    end
+  endtask
+
+  task dos_valid_un_invalid;
+    begin
+        @(posedge clk) i_valid = 1;
+        #100;
+        i_corrupt = 1;
+        #100;
+        @(posedge clk) i_corrupt = 0;
+        #100;
+    end
+  endtask
+
+  task cinco_validos_tres_invalidos;
+    begin
+        @(posedge clk) i_valid = 1;
+        #500;
+        i_corrupt = 1;
+        #200;
+        @(posedge clk) i_corrupt = 0;
+        #100;
     end
   endtask
 

@@ -8,8 +8,11 @@ module top(
     input   wire        i_soft_reset, // Reset sincrónico para inicializar con la semilla del puerto
     input   wire [7:0]  i_seed,       // Semilla inicial proporcionada desde el puerto
     output  wire        o_lock,       // Salida de la secuencia generada 
-    output  wire [7:0]  connect_lfsr  
+    input   wire        i_corrupt    // Señal para corromper la secuencia
 );
+
+  wire [7:0] lfsr_output;
+  wire [7:0] connect_lfsr;
 
   lfsr_galois u_lfsr_galois(
     .clk(clk),
@@ -17,8 +20,10 @@ module top(
     .i_rst(i_rst),
     .i_soft_reset(i_soft_reset),
     .i_seed(i_seed),
-    .o_lfsr(connect_lfsr)
+    .o_lfsr(lfsr_output)
   );
+
+  assign connect_lfsr = i_corrupt ? {~lfsr_output[0], lfsr_output[7:1]} : lfsr_output;
 
   lfsr_checker u_lfsr_checker(
     .clk(clk),

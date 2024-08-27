@@ -1,15 +1,14 @@
 `timescale 1ns / 1ps
 `include "top.v"
 
-// CHECKEO FUNCIONALIDAD GENERAL CON EL CHEKCKER.
-
+// CHECKEO DE CORRUPCION DE SECUENCIA Y DESBLOQUEO
 //-----------------------------------------------------
-// iverilog -o tb/tb1 tb/lfsr_galois_tb1.v
-// vvp tb/tb1
-// gtkwave tb/lfsr_galois_tb1.vcd
+// iverilog -o tb/tb3 tb/lfsr_galois_tb3.v
+// vvp tb/tb3
+// gtkwave tb/lfsr_galois_tb3.vcd
 //-----------------------------------------------------
 
-module lfsr_galois_tb1;
+module lfsr_galois_tb3;
 
   reg clk;
   reg i_valid;
@@ -34,8 +33,8 @@ module lfsr_galois_tb1;
   always #50 clk = ~clk;
 
 initial begin
-    $dumpfile("tb/lfsr_galois_tb1.vcd");
-    $dumpvars(0, lfsr_galois_tb1);
+    $dumpfile("tb/lfsr_galois_tb3.vcd");
+    $dumpvars(0, lfsr_galois_tb3);
     
     clk = 0;
     i_valid = 0;
@@ -57,6 +56,8 @@ initial begin
     random_valid;  
 
     #1000;
+
+    desbloqueo;
 
     $finish;
 end
@@ -100,6 +101,17 @@ end
         i_valid = $random % 2; // 0 o 1
         #100; 
       end
+    end
+  endtask
+
+  task desbloqueo;
+    begin
+      #100;
+      @(posedge clk);
+      i_valid = 1;
+      #100;
+      i_corrupt = 1;
+      #2000;
     end
   endtask
 

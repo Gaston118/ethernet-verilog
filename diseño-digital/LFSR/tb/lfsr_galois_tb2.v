@@ -1,9 +1,12 @@
 `timescale 1ns / 1ps
 `include "lfsr_galois.v"
 
+// CHECKEO PERIODICIDAD
+
 //-----------------------------------------------------
 //iverilog -o tb/tb2 tb/lfsr_galois_tb2.v
 //vvp tb/tb2
+//gtkwave tb/lfsr_galois_tb2.vcd
 //-----------------------------------------------------
 
 module lfsr_galois_tb2;
