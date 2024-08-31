@@ -41,7 +41,7 @@ module lfsr_checker(
       valid_count <= valid_count + 1;
       invalid_count <= 0;
 
-      if (valid_count >= 5) begin
+      if ((valid_count + 1)== 3'b101) begin
         lock <= 1'b1;
       end
 
@@ -59,7 +59,7 @@ module lfsr_checker(
         invalid_count <= invalid_count + 1;
         valid_count <= 0;
         
-        if (invalid_count >= 3) begin
+        if (invalid_count == 2'b11) begin
           lock <= 1'b0;
         end
 

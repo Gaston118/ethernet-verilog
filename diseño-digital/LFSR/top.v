@@ -23,7 +23,7 @@ module top(
     .o_lfsr(lfsr_output)
   );
 
-  assign connect_lfsr = i_corrupt ? {~lfsr_output[0], lfsr_output[7:1]} : lfsr_output;
+  assign connect_lfsr = i_corrupt ? {~lfsr_output[7], lfsr_output[6:0]} : lfsr_output;
 
   lfsr_checker u_lfsr_checker(
     .clk(clk),
