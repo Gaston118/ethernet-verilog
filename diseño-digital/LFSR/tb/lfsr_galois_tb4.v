@@ -128,7 +128,7 @@ end
         @(posedge clk) i_valid = 1;
         #500;
         i_corrupt = 1;
-        #200;
+        #300;
         @(posedge clk) i_corrupt = 0;
         #100;
     end
