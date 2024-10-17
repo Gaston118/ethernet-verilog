@@ -3,6 +3,7 @@
 
 //iverilog -o tb/tb2 tb/eth_phy_10g_tb2.v
 //vvp tb/tb2
+//gtkwave tb/eth_phy_10g_tb2.vcd
 
 module eth_phy_10g_tb2;
 

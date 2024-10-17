@@ -28,9 +28,9 @@ module lfsr_galois_tb4;
     .i_corrupt(i_corrupt)
   );
 
-  // 10MHz = 100ns
+  // 100 MHz = 10 ns
 
-  always #50 clk = ~clk;
+  always #5 clk = ~clk;
 
 initial begin
     $dumpfile("tb/lfsr_galois_tb4.vcd");
@@ -115,22 +115,22 @@ end
   task dos_valid_un_invalid;
     begin
         @(posedge clk) i_valid = 1;
-        #100;
+        #10;
         i_corrupt = 1;
-        #100;
+        #10;
         @(posedge clk) i_corrupt = 0;
-        #100;
+        #10;
     end
   endtask
 
   task cinco_validos_tres_invalidos;
     begin
         @(posedge clk) i_valid = 1;
-        #500;
+        #50;
         i_corrupt = 1;
-        #300;
+        #30;
         @(posedge clk) i_corrupt = 0;
-        #100;
+        #10;
     end
   endtask
 

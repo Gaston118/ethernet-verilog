@@ -1,6 +1,10 @@
 `timescale 1ns/1ns
 `include "eth_phy_10g.v"
 
+//iverilog -o tb/tb1 tb/eth_phy_10g_tb.v
+//vvp tb/tb1
+//gtkwave tb/eth_phy_10g_tb1.vcd
+
 module eth_phy_10g_tb;
 
     // Parámetros del módulo
