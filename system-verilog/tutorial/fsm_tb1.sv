@@ -1,7 +1,7 @@
 `include "fsm.sv"
 
 // Testbench
-module tb1;
+module fsm_tb1;
 
 reg  clk, a;
 wire out1, out2;
@@ -14,8 +14,8 @@ fsm FSM(.clk(clk),
 
 initial begin
   // Dump waves
-  $dumpfile("dump.vcd");
-  $dumpvars(1, tb1);
+  $dumpfile("fsm_tb1.vcd");
+  $dumpvars(1, fsm_tb1);
 
   clk = 0;
   a = 0;
