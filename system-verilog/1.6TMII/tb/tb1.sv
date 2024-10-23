@@ -11,7 +11,7 @@ module tb1();
     parameter [7:0] DATA_CHAR_PATTERN = 8'hAA; // Data character pattern
     parameter [7:0] CTRL_CHAR_PATTERN = 8'h55; // Control character pattern
     parameter int ERROR_PROBABILITY = 5;       // Probability of injecting error (0-100)
-    parameter int NUM_CYCLES = 1000;           // Number of cycles to run
+    parameter int NUM_CYCLES = 2000;           // Number of cycles to run
 
     // Testbench signals
     logic clk;
@@ -78,14 +78,16 @@ module tb1();
             // Check for errors
             if (tx_er == 1'b1) begin
                 errors_count++;
-            end
+            end else begin
 
-            for (int j = 0; j < DATA_WIDTH/8; j++) begin
-                if (ctrl_out[j] == 1'b0) begin
-                    total_data_chars++;
-                end else begin
-                    total_ctrl_chars++;
+                for (int j = 0; j < DATA_WIDTH/8; j++) begin
+                    if (ctrl_out[j] == 1'b0) begin
+                        total_data_chars++;
+                    end else begin
+                        total_ctrl_chars++;
+                    end
                 end
+
             end
         end
 
@@ -94,6 +96,7 @@ module tb1();
         $display("|                      |   Received  |");
         $display("| Data Characters      | %11d |", total_data_chars);
         $display("| Control Characters   | %11d |", total_ctrl_chars);
+        $display("| Total Characters     | %11d |", total_data_chars + total_ctrl_chars);
         $display("| Total Errors         | %11d |", errors_count);
 
         $finish;
