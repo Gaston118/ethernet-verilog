@@ -10,8 +10,6 @@ module tb1;
     // Parameters
     localparam int DATA_WIDTH = 64;
     localparam int CTRL_WIDTH = 1;
-    localparam int IDLE_LENGTH = 16;
-    localparam int DATA_LENGTH = 64;
 
     // Signals
     logic clk;
@@ -22,9 +20,7 @@ module tb1;
     // Instantiate the generator module
     generator #(
         .DATA_WIDTH(DATA_WIDTH),
-        .CTRL_WIDTH(CTRL_WIDTH),
-        .IDLE_LENGTH(IDLE_LENGTH),
-        .DATA_LENGTH(DATA_LENGTH)
+        .CTRL_WIDTH(CTRL_WIDTH)
     ) dut (
         .clk(clk),
         .i_rst(i_rst),
@@ -51,7 +47,7 @@ module tb1;
         $monitor("Time: %0t | o_tx_data: %h | o_tx_ctrl: %b", $time, o_tx_data, o_tx_ctrl);
 
         // Run the simulation for a certain period
-        #3000; // Run for 500 ns
+        #500; // Run for 500 ns
 
         $finish;
     end
