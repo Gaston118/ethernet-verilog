@@ -1,5 +1,6 @@
 `timescale 1ns/100ps
 `include "generator.sv"
+`include "checker.sv"
 
 // iverilog -g2012 -o tb/tb1 tb/tb1.sv
 // vvp tb/tb1
@@ -28,10 +29,19 @@ module tb1;
         .o_tx_ctrl(o_tx_ctrl)
     );
 
+    // Instantiate the checker module
+    generator_checker #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) uut (
+        .clk(clk),
+        .i_rst(i_rst),
+        .i_tx_data(o_tx_data),
+        .i_tx_ctrl(o_tx_ctrl)
+    );
+
     // Clock generation
     always #5 clk = ~clk; // 100 MHz clock
    
-
     // Test procedure
     initial begin
         $dumpfile("tb/tb1.vcd");
