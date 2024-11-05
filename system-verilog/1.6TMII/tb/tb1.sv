@@ -3,9 +3,14 @@
 module tb1;
 
     // Parameters
-    localparam int DATA_WIDTH = 64;
-    
-    // Signals
+    parameter DATA_WIDTH = 64;                 // Must be a multiple of 8 bits (octets)
+    parameter int DATA_CHAR_PROBABILITY = 70;  // Probability in percentage (0-100)
+    parameter [7:0] DATA_CHAR_PATTERN = 8'hAA; // Data character pattern
+    parameter [7:0] CTRL_CHAR_PATTERN = 8'h55; // Control character pattern
+    parameter int ERROR_PROBABILITY = 5;       // Probability of injecting error (0-100)
+    parameter int NUM_CYCLES = 2000;           // Number of cycles to run
+
+    // Testbench signals
     logic clk;
     logic i_rst;
     logic [DATA_WIDTH-1:0] o_tx_data;
@@ -49,7 +54,51 @@ module tb1;
 
     // Monitor outputs
     initial begin
-        $monitor("Time: %0t | o_tx_data: %h | o_tx_ctrl: %b", $time, o_tx_data, o_tx_ctrl);
-    end
+        // Apply reset
+        rst_n = 0;
+        #20;
+        rst_n = 1;
 
+        // Run simulation for NUM_CYCLES
+        repeat (NUM_CYCLES) @(posedge clk);
+
+        // Finish simulation
+        $display("Simulation finished after %0d cycles.", NUM_CYCLES);
+        $display("");
+
+        // Calculate error-free counts
+        total_data_chars = 0;
+        total_ctrl_chars = 0;
+        errors_count = 0;
+
+        // Analyze data and control signals
+        for (int i = 0; i < NUM_CYCLES; i++) begin
+
+            @(posedge clk);
+            // Check for errors
+            if (tx_er == 1'b1) begin
+                errors_count++;
+            end else begin
+
+                for (int j = 0; j < DATA_WIDTH/8; j++) begin
+                    if (ctrl_out[j] == 1'b0) begin
+                        total_data_chars++;
+                    end else begin
+                        total_ctrl_chars++;
+                    end
+                end
+
+            end
+        end
+
+        // Display results in table format
+        $display("Final Results:");
+        $display("|                      |   Received  |");
+        $display("| Data Characters      | %11d |", total_data_chars);
+        $display("| Control Characters   | %11d |", total_ctrl_chars);
+        $display("| Total Characters     | %11d |", total_data_chars + total_ctrl_chars);
+        $display("| Total Errors         | %11d |", errors_count);
+
+        $finish;
+    end
 endmodule
