@@ -6,7 +6,7 @@ module generator
     *---------WIDTH---------
     */
     parameter int DATA_WIDTH = 64,
-    parameter int CTRL_WIDTH = 1,  // Cambiado a 1 bit
+    parameter int CTRL_WIDTH = 8,  // Cambiado a 1 bit
     /*
     *---------LENGTH---------
     */
@@ -18,7 +18,7 @@ module generator
     input  logic                  clk,
     input  logic                  i_rst,
     output logic [DATA_WIDTH-1:0] o_tx_data,
-    output logic                  o_tx_ctrl
+    output logic [CTRL_WIDTH-1:0] o_tx_ctrl
 );
 
     // Local Parameters
@@ -33,7 +33,7 @@ module generator
     // Internal Signals
     state_t state, next_state;
     logic [DATA_WIDTH-1:0] tx_data, next_tx_data;
-    logic tx_ctrl, next_tx_ctrl; // Control signal como un solo bit
+    logic [CTRL_WIDTH-1:0] tx_ctrl, next_tx_ctrl; // Control signal como un solo bit
 
     // State Transition Logic
     always_comb begin

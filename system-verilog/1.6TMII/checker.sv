@@ -1,15 +1,17 @@
 `timescale 1ns/100ps
 
-module generator_checker
+module generator_checker # (
+    parameter int DATA_WIDTH = 64,
+    parameter int CTRL_WIDTH = 8
+)
 (
     input logic                  clk,
     input logic                  i_rst,
     input logic [DATA_WIDTH-1:0] i_tx_data,
-    input logic                  i_tx_ctrl
+    input logic [CTRL_WIDTH-1:0] i_tx_ctrl
 );
 
     // Local Parameters
-    parameter int DATA_WIDTH = 64;
     parameter [7:0] IDLE_CODE = 8'h07;
     parameter [7:0] START_CODE = 8'hFB;
     parameter [7:0] EOF_CODE = 8'hFD;

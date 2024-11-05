@@ -10,13 +10,13 @@ module tb1;
 
     // Parameters
     localparam int DATA_WIDTH = 64;
-    localparam int CTRL_WIDTH = 1;
+    localparam int CTRL_WIDTH = 8;
 
     // Signals
     logic clk;
     logic i_rst;
     logic [DATA_WIDTH-1:0] o_tx_data;
-    logic o_tx_ctrl;
+    logic [CTRL_WIDTH-1:0] o_tx_ctrl;
 
     // Instantiate the generator module
     generator #(
