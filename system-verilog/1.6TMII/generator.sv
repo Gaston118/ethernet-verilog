@@ -1,57 +1,110 @@
-module generator #(
-    parameter DATA_WIDTH = 64,                 // Must be a multiple of 8 bits (octets)
-    parameter int DATA_CHAR_PROBABILITY = 70,  // Probability in percentage (0-100)
-    parameter int ERROR_PROBABILITY     = 5,   // Probability of error in percentage 
-    parameter [7:0] DATA_CHAR_PATTERN   = 8'hAA, // Pattern for data character
-    parameter [7:0] CTRL_CHAR_PATTERN   = 8'h55  // Pattern for control character
-)(
-    input  logic                         clk,
-    input  logic                         rst_n,
-    output logic [DATA_WIDTH-1:0]        data_out,
-    output logic [(DATA_WIDTH/8)-1:0]    ctrl_out,
-    output logic                         tx_en,    // Transmit Enable
-    output logic                         tx_er     // Transmit Error
+`timescale 1ns/100ps
+
+module generator 
+#(
+    /*
+    *---------WIDTH---------
+    */
+    parameter int DATA_WIDTH = 64,
+    parameter int CTRL_WIDTH = 1,  // Cambiado a 1 bit
+    /*
+    *---------LENGTH---------
+    */
+    parameter int IDLE_LENGTH = 16,      //! Idle length 
+    parameter int DATA_LENGTH = 64,      //! Data length (modificado a 64)
+    /*
+    *---------CODES---------
+    */
+    parameter [7:0] IDLE_CODE = 8'h07,
+    parameter [7:0] START_CODE = 8'hFB,
+    parameter [7:0] EOF_CODE = 8'hFD
+)
+(
+    input  logic                  clk,
+    input  logic                  i_rst,
+    output logic [DATA_WIDTH-1:0] o_tx_data,
+    output logic                  o_tx_ctrl
 );
 
-    int random_char;
-    int random_error;
-    logic error_detected;  // Flag to indicate if an error is detected
+    // Local Parameters
+    localparam [DATA_WIDTH-1:0] DATA_CHAR_PATTERN = {DATA_WIDTH{8'hAA}};
+    typedef enum logic [1:0] {
+        IDLE = 2'b00,
+        START = 2'b01,
+        DATA = 2'b10,
+        EOF = 2'b11
+    } state_t;
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            data_out <= '0;
-            ctrl_out <= '0;
-            tx_en    <= 1'b0;
-            tx_er    <= 1'b0;
-        end else begin
-            tx_en <= 1'b1;
-            error_detected = 1'b0;  // Reset error flag for each cycle
+    // Internal Signals
+    state_t state, next_state;
+    logic [7:0] counter, next_counter;
+    logic [DATA_WIDTH-1:0] tx_data, next_tx_data;
+    logic tx_ctrl, next_tx_ctrl; // Control signal como un solo bit
 
-            for (int i = 0; i < DATA_WIDTH/8; i++) begin
-              
-                random_error = $urandom_range(0, 99);
+    // State Transition Logic
+    always_comb begin
+        next_state = state;
+        next_tx_data = tx_data;
+        next_tx_ctrl = tx_ctrl; // Inicializa el next_tx_ctrl con el valor actual
+        next_counter = counter; // Inicializa el next_counter con el valor actual
 
-                if (random_error < ERROR_PROBABILITY) begin
-                    error_detected = 1'b1;  
-                    data_out[i*8 +: 8] <= ~DATA_CHAR_PATTERN; 
-                    ctrl_out[i]        <= 1'b0;               
+        case (state)
+        IDLE: begin
+            next_tx_data = {DATA_WIDTH{IDLE_CODE}}; // Siempre emite el IDLE_CODE
+            next_tx_ctrl = 1'b1; // Control de IDLE es 1
+            if (counter < (IDLE_LENGTH - 1)) begin
+                next_counter = counter + 1; // Incrementa el contador
+            end else begin
+                next_state = START; // Cambia a START después de IDLE_LENGTH ciclos
+                next_counter = 0;    // Reinicia el contador
+            end
+        end
 
-                end else begin
-                    random_char = $urandom_range(0, 99);
-
-                    if (random_char < DATA_CHAR_PROBABILITY) begin
-                        data_out[i*8 +: 8] <= DATA_CHAR_PATTERN;
-                        ctrl_out[i]        <= 1'b0;  // Data character
-
-                    end else begin
-                        data_out[i*8 +: 8] <= CTRL_CHAR_PATTERN;
-                        ctrl_out[i]        <= 1'b1;  // Control character
-                    end
-                end
+            START: begin
+                next_tx_data = { {DATA_WIDTH - 8{IDLE_CODE}}, START_CODE };
+                next_tx_ctrl = 1'b1; // Control de START es 1
+                next_state = DATA;
+                next_counter = 0;
             end
 
-            // Set the transmit error flag at the end of the loop
-            tx_er <= error_detected;
+            DATA: begin
+                next_tx_data = DATA_CHAR_PATTERN;
+                next_tx_ctrl = 1'b0; // Todos los bytes son datos, control es 0
+                if (counter >= (DATA_LENGTH - 1)) begin
+                    next_state = EOF;
+                    next_counter = 0;
+                end else begin
+                    next_counter = counter + 1; // Incrementa el contador
+                end
+            end            
+
+
+            EOF: begin
+                next_tx_data = { {DATA_WIDTH - 8{DATA_CHAR_PATTERN}}, EOF_CODE };
+                next_tx_ctrl = 1'b1; // Control de EOF es 1
+                next_state = IDLE; // Regresa al estado IDLE
+                next_counter = 0;   // Reinicia el contador
+            end
+        endcase
+    end
+
+    // Synchronous State Update
+    always_ff @(posedge clk or posedge i_rst) begin
+        if (i_rst) begin
+            state <= IDLE;
+            counter <= 0;
+            tx_data <= {DATA_WIDTH{1'b0}};
+            tx_ctrl <= 1'b0; // Inicializa el control en 0
+        end else begin
+            state <= next_state;
+            counter <= next_counter;
+            tx_data <= next_tx_data;
+            tx_ctrl <= next_tx_ctrl; // Actualiza el control
         end
     end
+
+    // Output Assignments
+    assign o_tx_data = tx_data;
+    assign o_tx_ctrl = tx_ctrl; // Salida de control de un solo bit
+
 endmodule
