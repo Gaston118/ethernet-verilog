@@ -1,30 +1,30 @@
+`timescale 1ns/100ps
 `include "generator.sv"
+
+// iverilog -g2012 -o tb/tb1 tb/tb1.sv
+// vvp tb/tb1
+// gtkwave tb/tb1.vcd
 
 module tb1;
 
     // Parameters
-    parameter DATA_WIDTH = 64;                 // Must be a multiple of 8 bits (octets)
-    parameter int DATA_CHAR_PROBABILITY = 70;  // Probability in percentage (0-100)
-    parameter [7:0] DATA_CHAR_PATTERN = 8'hAA; // Data character pattern
-    parameter [7:0] CTRL_CHAR_PATTERN = 8'h55; // Control character pattern
-    parameter int ERROR_PROBABILITY = 5;       // Probability of injecting error (0-100)
-    parameter int NUM_CYCLES = 2000;           // Number of cycles to run
+    localparam int DATA_WIDTH = 64;
+    localparam int CTRL_WIDTH = 1;
+    localparam int IDLE_LENGTH = 16;
+    localparam int DATA_LENGTH = 64;
 
-    // Testbench signals
+    // Signals
     logic clk;
     logic i_rst;
     logic [DATA_WIDTH-1:0] o_tx_data;
     logic o_tx_ctrl;
 
-    // Instantiate the generator
+    // Instantiate the generator module
     generator #(
         .DATA_WIDTH(DATA_WIDTH),
-        .CTRL_WIDTH(1),
-        .IDLE_LENGTH(16),
-        .DATA_LENGTH(64),
-        .IDLE_CODE(8'h07),
-        .START_CODE(8'hFB),
-        .EOF_CODE(8'hFD)
+        .CTRL_WIDTH(CTRL_WIDTH),
+        .IDLE_LENGTH(IDLE_LENGTH),
+        .DATA_LENGTH(DATA_LENGTH)
     ) dut (
         .clk(clk),
         .i_rst(i_rst),
@@ -32,73 +32,28 @@ module tb1;
         .o_tx_ctrl(o_tx_ctrl)
     );
 
-    // Clock Generation
-    always #5 clk = ~clk;
+    // Clock generation
+    always #5 clk = ~clk; // 100 MHz clock
+   
 
-    // Test Sequence
+    // Test procedure
     initial begin
         $dumpfile("tb/tb1.vcd");
         $dumpvars(0, tb1);
 
         clk = 0;
-        i_rst = 1; // Assert reset
-        #10;
-        i_rst = 0; // Release reset
-        
-        // Wait for some time to observe output
-        #3000;
-        
-        // Finish the simulation
-        $finish;
-    end
+        // Initialize signals
+        i_rst = 1;
+        #10; // Hold reset for 10 ns
+        i_rst = 0;
 
-    // Monitor outputs
-    initial begin
-        // Apply reset
-        rst_n = 0;
-        #20;
-        rst_n = 1;
+        // Simple output monitoring
+        $monitor("Time: %0t | o_tx_data: %h | o_tx_ctrl: %b", $time, o_tx_data, o_tx_ctrl);
 
-        // Run simulation for NUM_CYCLES
-        repeat (NUM_CYCLES) @(posedge clk);
-
-        // Finish simulation
-        $display("Simulation finished after %0d cycles.", NUM_CYCLES);
-        $display("");
-
-        // Calculate error-free counts
-        total_data_chars = 0;
-        total_ctrl_chars = 0;
-        errors_count = 0;
-
-        // Analyze data and control signals
-        for (int i = 0; i < NUM_CYCLES; i++) begin
-
-            @(posedge clk);
-            // Check for errors
-            if (tx_er == 1'b1) begin
-                errors_count++;
-            end else begin
-
-                for (int j = 0; j < DATA_WIDTH/8; j++) begin
-                    if (ctrl_out[j] == 1'b0) begin
-                        total_data_chars++;
-                    end else begin
-                        total_ctrl_chars++;
-                    end
-                end
-
-            end
-        end
-
-        // Display results in table format
-        $display("Final Results:");
-        $display("|                      |   Received  |");
-        $display("| Data Characters      | %11d |", total_data_chars);
-        $display("| Control Characters   | %11d |", total_ctrl_chars);
-        $display("| Total Characters     | %11d |", total_data_chars + total_ctrl_chars);
-        $display("| Total Errors         | %11d |", errors_count);
+        // Run the simulation for a certain period
+        #3000; // Run for 500 ns
 
         $finish;
     end
+
 endmodule
