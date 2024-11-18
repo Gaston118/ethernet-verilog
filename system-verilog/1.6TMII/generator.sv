@@ -64,7 +64,7 @@ module generator
             next_tx_ctrl = 1'b1; // Control de START es 1
             next_state = DATA;
             next_data_counter = 0; // Reinicia el contador de datos
-            num_data_cycles = $urandom_range(1, 20); // Número de ciclos de datos
+            num_data_cycles = $urandom_range(1, 30); // Número de ciclos de datos
         end
         
         DATA: begin

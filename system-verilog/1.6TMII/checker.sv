@@ -41,6 +41,10 @@ module mii_checker
     assign eof_data_byte   = i_tx_data[63:56];
     assign tx_ctrl_bit  = i_tx_ctrl[0];
     
+    task automatic log_error(input string msg);
+        $display("[%0t ns] ERROR: %s | state: %0d, payload_counter: %0d, start_byte: 0x%02h, eof_byte: 0x%02h, tx_ctrl: 0x%02h", 
+                 $time, msg, state, payload_counter, start_data_byte, eof_data_byte, i_tx_ctrl);
+    endtask
 
     // Lógica combinacional para determinar el próximo estado
     always_comb begin
@@ -91,5 +95,17 @@ module mii_checker
             o_error <= next_error;
         end
     end
+
+    // Logger (solo para simulación)
+    `ifndef SYNTHESIS
+    always @(posedge clk) begin
+        if (o_error) begin
+            $display("----------------------------------------------------------");
+            $display("[%0t ns] ERROR: Payload fuera de rango detectado", $time);
+            $display("Bytes enviados: %0d", payload_counter * (DATA_WIDTH / 8));
+            $display("----------------------------------------------------------");
+        end
+    end
+    `endif
 
 endmodule

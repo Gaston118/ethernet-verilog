@@ -57,7 +57,7 @@ module tb1;
         i_rst = 0;
 
         // Run the simulation for a certain period
-        #1500;
+        #5000;
 
         $finish;
     end
