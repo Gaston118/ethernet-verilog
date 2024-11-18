@@ -17,6 +17,7 @@ module tb1;
     logic i_rst;
     logic [DATA_WIDTH-1:0] o_tx_data;
     logic [CTRL_WIDTH-1:0] o_tx_ctrl;
+    logic o_error;
 
     // Instantiate the generator module
     generator #(
@@ -29,14 +30,16 @@ module tb1;
         .o_tx_ctrl(o_tx_ctrl)
     );
 
-    // Instantiate the checker module
-    generator_checker #(
-        .DATA_WIDTH(DATA_WIDTH)
+    // Instance mii_checker
+    mii_checker #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .CTRL_WIDTH(CTRL_WIDTH)
     ) uut (
         .clk(clk),
         .i_rst(i_rst),
         .i_tx_data(o_tx_data),
-        .i_tx_ctrl(o_tx_ctrl)
+        .i_tx_ctrl(o_tx_ctrl),
+        .o_error(o_error)
     );
 
     // Clock generation
@@ -50,14 +53,11 @@ module tb1;
         clk = 0;
         // Initialize signals
         i_rst = 1;
-        #10; // Hold reset for 10 ns
+        #20; // Hold reset for 10 ns
         i_rst = 0;
 
-        // Simple output monitoring
-        $monitor("Time: %0t | o_tx_data: %h | o_tx_ctrl: %b", $time, o_tx_data, o_tx_ctrl);
-
         // Run the simulation for a certain period
-        #500; // Run for 500 ns
+        #1500;
 
         $finish;
     end
