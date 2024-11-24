@@ -90,10 +90,12 @@ module generator
 
                 // Generar el control correspondiente
                 for (int i = 0; i < CTRL_WIDTH; i++) begin
-                    if (i == fd_position) begin
+                    if  (i < fd_position) begin
+                        temp_ctrl[i] = 1'b0; // No hay control
+                    end else if (i == fd_position) begin
                         temp_ctrl[i] = 1'b1; // Indicar control en `fd_position`
                     end else begin
-                        temp_ctrl[i] = 1'b0;
+                        temp_ctrl[i] = 1'b1;
                     end
                 end
 
