@@ -17,7 +17,7 @@ module tb1;
     logic i_rst;
     logic [DATA_WIDTH-1:0] o_tx_data;
     logic [CTRL_WIDTH-1:0] o_tx_ctrl;
-    logic o_error;
+    logic other_error, payload_error, intergap_error;
 
     // Instantiate the generator module
     generator #(
@@ -30,17 +30,23 @@ module tb1;
         .o_tx_ctrl(o_tx_ctrl)
     );
 
-    // Instance mii_checker
+    // Instantiate the checker module
     mii_checker #(
         .DATA_WIDTH(DATA_WIDTH),
-        .CTRL_WIDTH(CTRL_WIDTH)
-    ) uut (
+        .CTRL_WIDTH(CTRL_WIDTH),
+        .IDLE_CODE(8'h07),
+        .START_CODE(8'hFB),
+        .TERM_CODE(8'hFD)
+    ) tb1 (
         .clk(clk),
         .i_rst(i_rst),
         .i_tx_data(o_tx_data),
         .i_tx_ctrl(o_tx_ctrl),
-        .o_error(o_error)
+        .payload_error(payload_error),
+        .intergap_error(intergap_error),
+        .other_error(other_error)
     );
+
 
     // Clock generation
     always #5 clk = ~clk; // 100 MHz clock
@@ -57,7 +63,7 @@ module tb1;
         i_rst = 0;
 
         // Run the simulation for a certain period
-        #5000;
+        #2000;
 
         $finish;
     end
