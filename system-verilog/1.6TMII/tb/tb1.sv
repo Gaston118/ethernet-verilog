@@ -33,11 +33,8 @@ module tb1;
     // Instantiate the checker module
     mii_checker #(
         .DATA_WIDTH(DATA_WIDTH),
-        .CTRL_WIDTH(CTRL_WIDTH),
-        .IDLE_CODE(8'h07),
-        .START_CODE(8'hFB),
-        .TERM_CODE(8'hFD)
-    ) tb1 (
+        .CTRL_WIDTH(CTRL_WIDTH)
+    ) uut (
         .clk(clk),
         .i_rst(i_rst),
         .i_tx_data(o_tx_data),
