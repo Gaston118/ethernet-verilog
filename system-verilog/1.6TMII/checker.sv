@@ -16,15 +16,19 @@ module mii_checker
     input  logic [CTRL_WIDTH-1:0] i_tx_ctrl,
     output logic                  payload_error,  // Error: payload fuera de rango
     output logic                  intergap_error, // Error: intergap insuficiente
-    output logic                  other_error    // Error: otros errores
+    output logic                  other_error,    // Error: otros errores
+    output logic [DATA_WIDTH-1:0] o_captured_data, // Datos capturados
+    output logic                  o_data_valid   // Datos válidos
 );
 
-    // Constantes de validación (40 a 136 bytes)
+    // Constantes de validación
     localparam int MIN_PAYLOAD_BYTES = 46;
     localparam int MAX_PAYLOAD_BYTES = 150;
 
     localparam int MIN_INTERGAP = 12; 
     localparam int MAX_INTERGAP = 40;
+
+    localparam int BUFFER_SIZE = 150;
 
     typedef enum logic [1:0] {
         WAIT_START = 2'b00,
@@ -46,6 +50,14 @@ module mii_checker
     assign start_data_byte = i_tx_data[7:0];
     assign tx_ctrl_bit  = i_tx_ctrl[0];
 
+    logic [DATA_WIDTH-1:0] data_buffer [0:BUFFER_SIZE-1]; // Buffer de datos capturados
+    int buffer_index, next_buffer_index;
+    logic capture_enable;
+
+    // Asignaciones iniciales
+    assign o_captured_data = data_buffer[buffer_index];
+    assign o_data_valid = (buffer_index > 0);
+
     // Lógica combinacional para determinar el próximo estado
     always_comb begin
         next_state = state;
@@ -58,12 +70,15 @@ module mii_checker
         found_start = 1'b0;
         idle_error = 1'b0;
         valid_idle = 1'b0;
+        next_buffer_index = buffer_index;
+        capture_enable = 1'b0;
 
         case (state)
         WAIT_START: begin
             if (start_data_byte == START_CODE && tx_ctrl_bit == 1'b1) begin
                 next_state = COUNT_DATA;
                 next_payload_counter = 7; // Reinicia el contador de datos
+                capture_enable = 1'b1;
             end
         end
 
@@ -71,6 +86,7 @@ module mii_checker
             found_term = 1'b0; // Señal para indicar si encontramos TERM_CODE en este ciclo
             next_payload_counter = payload_counter;
             next_intergap_counter = 0;
+            next_buffer_index = 0;
         
             for (i = 0; i < 8; i = i + 1) begin
                 if (!found_term) begin
@@ -79,6 +95,7 @@ module mii_checker
                         next_payload_counter = next_payload_counter + i; // i indica cuántos bytes válidos había antes
                         next_intergap_counter = intergap_counter + (7-i); // i indica cuántos bytes de intergap había antes
                         found_term = 1'b1; // Marcamos que encontramos el terminador
+                        capture_enable = 1'b0;
                     end
                 end
             end
@@ -98,13 +115,14 @@ module mii_checker
                     idle_error = 1'b1; // Error si lo que sigue al TERM_CODE no es IDLE_CODE
                 end else begin
                     // Verificar si el payload está dentro de los límites
-                    if (next_payload_counter < MIN_PAYLOAD_BYTES || next_payload_counter > MAX_PAYLOAD_BYTES) begin
+                    if (payload_counter < MIN_PAYLOAD_BYTES || payload_counter > MAX_PAYLOAD_BYTES) begin
                         p_error = 1'b1;
                     end
                     next_state = CHECK_INTERGAP;
                 end
             end else begin
-                next_payload_counter = next_payload_counter + (DATA_WIDTH / 8);
+                next_payload_counter = payload_counter + 8;
+                next_buffer_index = buffer_index + 1;
             end
         end
         
@@ -115,20 +133,23 @@ module mii_checker
             for (i = 0; i < CTRL_WIDTH; i = i + 1) begin
                 if (!found_start) begin
                     if (i_tx_ctrl[i] == 1'b1 && i_tx_data[i*8 +: 8] == START_CODE) begin
-                       next_intergap_counter = intergap_counter + i; 
+                        //next_intergap_counter = intergap_counter + i; 
                         next_payload_counter = payload_counter + (7-i); 
-                        found_start = 1'b1; // Indicar que hemos encontrado START_CODE
+                        found_start = 1'b1; // Indicar que hemos encontrado START_COD
+                        capture_enable = 1'b1;
                     end
                 end 
             end
 
             if(found_start) begin
-                if (next_intergap_counter < MIN_INTERGAP || next_intergap_counter > MAX_INTERGAP) begin
+                if (intergap_counter < MIN_INTERGAP || intergap_counter > MAX_INTERGAP) begin
                     itg_error = 1'b1;
                 end
                 next_state = COUNT_DATA;
+                next_intergap_counter = 0;
+                
             end else begin
-                next_intergap_counter = intergap_counter + CTRL_WIDTH; // Incrementar el contador de intergap
+                next_intergap_counter = intergap_counter + 8; // Incrementar el contador de intergap
             end     
         end    
         
@@ -140,12 +161,8 @@ module mii_checker
         if (i_rst) begin
             state <= WAIT_START;
             payload_counter <= 0;
-            o_error <= 1'b0;
-            p_error <= 1'b0;
-            itg_error <= 1'b0;
             intergap_counter <= 0;
-            found_term <= 1'b0;
-            found_start <= 1'b0;
+            buffer_index <= 0;
         end else begin
             state <= next_state;
             payload_counter <= next_payload_counter;
@@ -153,6 +170,10 @@ module mii_checker
             payload_error <= p_error;
             intergap_error <= itg_error;
             other_error <= o_error;
+            if (capture_enable && buffer_index < BUFFER_SIZE) begin
+                data_buffer[buffer_index] <= i_tx_data;
+            end
+            buffer_index <= next_buffer_index;
         end
     end
 
@@ -162,13 +183,13 @@ module mii_checker
         if (payload_error) begin
             $display("----------------------------------------------------------");
             $display("[%0t ns] ERROR: Payload fuera de rango detectado", $time);
-            $display("Bytes enviados: %0d", payload_counter * (DATA_WIDTH / 8));
+            $display("Bytes enviados: %0d", payload_counter );
             $display("----------------------------------------------------------");
         end
-        if (intergap_error) begin
+        if (itg_error) begin
             $display("----------------------------------------------------------");
             $display("[%0t ns] ERROR: Intergap", $time);
-            $display("Bytes enviados: %0d", intergap_counter * (DATA_WIDTH / 8));
+            $display("Bytes enviados: %0d", intergap_counter);
             $display("----------------------------------------------------------");
         end
         if (other_error) begin
