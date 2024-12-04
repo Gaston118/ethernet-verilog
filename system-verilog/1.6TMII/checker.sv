@@ -20,11 +20,11 @@ module mii_checker
 );
 
     // Constantes de validación (40 a 136 bytes)
-    localparam int MIN_PAYLOAD_BYTES = 40;
-    localparam int MAX_PAYLOAD_BYTES = 136;
+    localparam int MIN_PAYLOAD_BYTES = 46;
+    localparam int MAX_PAYLOAD_BYTES = 150;
 
-    localparam int MIN_INTERGAP = 12; // 16 Bytes mínimo entre tramas
-    localparam int MAX_INTERGAP = 40; // 40 Bytes máximo entre tramas
+    localparam int MIN_INTERGAP = 12; 
+    localparam int MAX_INTERGAP = 40;
 
     typedef enum logic [1:0] {
         WAIT_START = 2'b00,
