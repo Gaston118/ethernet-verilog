@@ -17,8 +17,7 @@ module mii_checker
     output logic                  payload_error,  // Error: payload fuera de rango
     output logic                  intergap_error, // Error: intergap insuficiente
     output logic                  other_error,    // Error: otros errores
-    output logic [DATA_WIDTH-1:0] o_captured_data, // Datos capturados
-    output logic                  o_data_valid   // Datos válidos
+    output logic [DATA_WIDTH-1:0] o_captured_data // Datos capturados
 );
 
     // Constantes de validación
@@ -38,32 +37,28 @@ module mii_checker
 
     // Señales internas
     state_t state, next_state;
-    int payload_counter, next_payload_counter;  // Contador de ciclos de datos
-    int intergap_counter, next_intergap_counter; // Contador de ciclos de intergap
-    logic o_error, p_error, itg_error; 
+    int payload_counter, next_payload_counter; 
+    int intergap_counter, next_intergap_counter; 
+    logic o_error, p_error, itg_error, idle_error; 
+    logic found_term, found_start, valid_idle;
     logic [7:0] start_data_byte;
     logic [7:0] term_data_byte;
     logic tx_ctrl_bit;
     int i, j;
-    logic found_term, found_start, valid_idle, idle_error;
-
-    assign start_data_byte = i_tx_data[7:0];
-    assign tx_ctrl_bit  = i_tx_ctrl[0];
 
     logic [DATA_WIDTH-1:0] data_buffer [0:BUFFER_SIZE-1]; // Buffer de datos capturados
     int buffer_index, next_buffer_index;
     logic capture_enable;
 
-    // Asignaciones iniciales
+    assign start_data_byte = i_tx_data[7:0];
+    assign tx_ctrl_bit  = i_tx_ctrl[0];
     assign o_captured_data = data_buffer[buffer_index];
-    assign o_data_valid = (buffer_index > 0);
 
     // Lógica combinacional para determinar el próximo estado
     always_comb begin
         next_state = state;
         next_payload_counter = payload_counter;
         next_intergap_counter = intergap_counter;
-        //next_buffer_index = buffer_index;
         o_error = 1'b0;
         p_error = 1'b0;
         itg_error = 1'b0;
@@ -76,24 +71,26 @@ module mii_checker
         WAIT_START: begin
             if (start_data_byte == START_CODE && tx_ctrl_bit == 1'b1) begin
                 next_state = COUNT_DATA;
-                next_payload_counter = 7; // Reinicia el contador de datos
+                next_payload_counter = 7;
                 capture_enable = 1'b1;
                 next_buffer_index = 0;
             end
         end
 
         COUNT_DATA: begin
-            found_term = 1'b0; // Señal para indicar si encontramos TERM_CODE en este ciclo
+            found_term = 1'b0; // Señal para indicar si encontramos TERM_CODE
             next_payload_counter = payload_counter;
             next_intergap_counter = 0;
         
             for (i = 0; i < 8; i = i + 1) begin
                 if (!found_term) begin
                     if (i_tx_data[i*8 +: 8] == TERM_CODE && i_tx_ctrl[i] == 1'b1) begin
-                        // Encontramos TERM_CODE, contamos solo los bytes válidos antes de este
-                        next_payload_counter = next_payload_counter + i; // i indica cuántos bytes válidos había antes
-                        next_intergap_counter = intergap_counter + (7-i); // i indica cuántos bytes de intergap había antes
-                        found_term = 1'b1; // Marcamos que encontramos el terminador
+                       // i indica cuántos bytes válidos había antes
+                        next_payload_counter = next_payload_counter + i; 
+
+                        // i indica cuántos bytes de intergap había antes
+                        next_intergap_counter = intergap_counter + (7-i); 
+                        found_term = 1'b1; 
                     end
                 end
             end
@@ -110,7 +107,8 @@ module mii_checker
                 end
         
                 if (!valid_idle) begin
-                    idle_error = 1'b1; // Error si lo que sigue al TERM_CODE no es IDLE_CODE
+                    idle_error = 1'b1;
+                    other_error = 1'b1;
                 end else begin
                     // Verificar si el payload está dentro de los límites
                     if (payload_counter < MIN_PAYLOAD_BYTES || payload_counter > MAX_PAYLOAD_BYTES) begin
@@ -126,8 +124,8 @@ module mii_checker
         end
         
         CHECK_INTERGAP: begin
-            next_intergap_counter = intergap_counter; // Mantener el valor actual del contador
-            next_payload_counter = 0; // Reiniciar el contador de payload
+            next_intergap_counter = intergap_counter; 
+            next_payload_counter = 0; 
             capture_enable = 1'b0;
 
             for (i = 0; i < CTRL_WIDTH; i = i + 1) begin
@@ -135,7 +133,7 @@ module mii_checker
                     if (i_tx_ctrl[i] == 1'b1 && i_tx_data[i*8 +: 8] == START_CODE) begin
                         //next_intergap_counter = intergap_counter + i; 
                         next_payload_counter = payload_counter + (7-i); 
-                        found_start = 1'b1; // Indicar que hemos encontrado START_COD
+                        found_start = 1'b1; 
                         capture_enable = 1'b1;
                         next_buffer_index = 0;
                     end
@@ -150,7 +148,7 @@ module mii_checker
                 next_intergap_counter = 0;
                 
             end else begin
-                next_intergap_counter = intergap_counter + 8; // Incrementar el contador de intergap
+                next_intergap_counter = intergap_counter + 8; 
             end     
         end    
         
