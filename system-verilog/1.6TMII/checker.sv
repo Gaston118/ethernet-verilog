@@ -63,6 +63,7 @@ module mii_checker
         next_state = state;
         next_payload_counter = payload_counter;
         next_intergap_counter = intergap_counter;
+        //next_buffer_index = buffer_index;
         o_error = 1'b0;
         p_error = 1'b0;
         itg_error = 1'b0;
@@ -70,8 +71,6 @@ module mii_checker
         found_start = 1'b0;
         idle_error = 1'b0;
         valid_idle = 1'b0;
-        next_buffer_index = buffer_index;
-        capture_enable = 1'b0;
 
         case (state)
         WAIT_START: begin
@@ -95,7 +94,6 @@ module mii_checker
                         next_payload_counter = next_payload_counter + i; // i indica cuántos bytes válidos había antes
                         next_intergap_counter = intergap_counter + (7-i); // i indica cuántos bytes de intergap había antes
                         found_term = 1'b1; // Marcamos que encontramos el terminador
-                        capture_enable = 1'b0;
                     end
                 end
             end
@@ -123,12 +121,14 @@ module mii_checker
             end else begin
                 next_payload_counter = payload_counter + 8;
                 next_buffer_index = buffer_index + 1;
+                capture_enable = 1'b1;
             end
         end
         
         CHECK_INTERGAP: begin
             next_intergap_counter = intergap_counter; // Mantener el valor actual del contador
             next_payload_counter = 0; // Reiniciar el contador de payload
+            capture_enable = 1'b0;
 
             for (i = 0; i < CTRL_WIDTH; i = i + 1) begin
                 if (!found_start) begin
@@ -162,7 +162,11 @@ module mii_checker
             state <= WAIT_START;
             payload_counter <= 0;
             intergap_counter <= 0;
+            capture_enable <= 0;
             buffer_index <= 0;
+            for (i = 0; i < BUFFER_SIZE; i = i + 1) begin
+                data_buffer[i] <= 0;
+            end
         end else begin
             state <= next_state;
             payload_counter <= next_payload_counter;
@@ -170,10 +174,10 @@ module mii_checker
             payload_error <= p_error;
             intergap_error <= itg_error;
             other_error <= o_error;
-            if (capture_enable && buffer_index < BUFFER_SIZE) begin
-                data_buffer[buffer_index] <= i_tx_data;
-            end
             buffer_index <= next_buffer_index;
+            if (capture_enable) begin
+                data_buffer[next_buffer_index] <= i_tx_data;
+            end 
         end
     end
 
