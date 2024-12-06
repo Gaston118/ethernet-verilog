@@ -78,6 +78,7 @@ module mii_checker
                 next_state = COUNT_DATA;
                 next_payload_counter = 7; // Reinicia el contador de datos
                 capture_enable = 1'b1;
+                next_buffer_index = 0;
             end
         end
 
@@ -85,7 +86,6 @@ module mii_checker
             found_term = 1'b0; // Señal para indicar si encontramos TERM_CODE en este ciclo
             next_payload_counter = payload_counter;
             next_intergap_counter = 0;
-            next_buffer_index = 0;
         
             for (i = 0; i < 8; i = i + 1) begin
                 if (!found_term) begin
@@ -137,6 +137,7 @@ module mii_checker
                         next_payload_counter = payload_counter + (7-i); 
                         found_start = 1'b1; // Indicar que hemos encontrado START_COD
                         capture_enable = 1'b1;
+                        next_buffer_index = 0;
                     end
                 end 
             end
