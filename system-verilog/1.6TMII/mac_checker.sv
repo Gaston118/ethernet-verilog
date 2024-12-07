@@ -12,8 +12,7 @@ module mac_checker #
     parameter [7:0] PREAMBLE_CODE   = 8'h55,
     parameter [7:0] SFD_CODE        = 8'hD5,
     parameter [47:0] DST_ADDR_CODE  = 48'h0180C2000001,
-    parameter [47:0] SRC_ADDR_CODE  = 48'h5A5152535455,
-    parameter [15:0] LEN_TYP_CODE   = 16'h8808
+    parameter [47:0] SRC_ADDR_CODE  = 48'h5A5152535455
 )
 (
     input logic                  clk,
@@ -21,9 +20,11 @@ module mac_checker #
     input logic [DATA_WIDTH-1:0] i_rx_data,
     input logic [CTRL_WIDTH-1:0] i_rx_ctrl,
     input logic [FCS_WIDTH-1:0]  i_rx_fcs,
-    output logic                 frame_error,
+    output logic                 preamble_error,
     output logic                 fcs_error,   
-    output logic                 format_error
+    output logic                 header_error,
+    output logic                 payload_error,
+    output logic                 o_data_valid
 );
 
     // Parámetros de los tamaños de los campos en bytes 
@@ -57,12 +58,19 @@ module mac_checker #
     assign tx_ctrl_bit  = i_rx_ctrl[0];
     assign sfd_data_byte = i_rx_data[63:56];
 
+    logic [15:0] length_type; // 2 bytes
     logic [127:0] shift_register; // 16 bytes
-    int next_payload_size, payload_size;                  
+    int next_payload_size, payload_size, length_type_size;                  
     logic valid_preamble, valid_header, valid_payload, valid_fcs;
     logic invalid_preamble, invalid_header, invalid_payload, invalid_fcs;
-    int i, j, k;
-    logic found_fcs;
+    int i, j, k, n;
+    logic found_fcs, valid_data;
+
+    assign preamble_error = invalid_preamble;
+    assign header_error = invalid_header;
+    assign payload_error = invalid_payload;
+    assign fcs_error = invalid_fcs;
+    assign o_data_valid = valid_data;
 
     always_comb begin
         next_state = state;
@@ -75,6 +83,7 @@ module mac_checker #
                     next_state = PREAMBLE;
                     valid_preamble = 1'b0;
                     invalid_preamble = 1'b0;
+                    valid_data = 1'b1;
                 end
             end
 
@@ -108,10 +117,7 @@ module mac_checker #
                             next_state = WAIT_START;
                         end
                     end else begin
-                        if (i_rx_data[j*8 +: 8] != LEN_TYP_CODE) begin
-                            invalid_header = 1'b1;
-                            next_state = WAIT_START;
-                        end
+                        length_type[(j-12)*8 +: 8] = i_rx_data[j*8 +: 8];
                     end
 
                     if (!invalid_header) begin
@@ -128,13 +134,19 @@ module mac_checker #
             PAYLOAD: begin
                 found_fcs = 1'b0;
                 next_payload_size = payload_size;
+                if (length_type > 16'h0000 && length_type < 16'h05DC) begin
+                    length_type_size = length_type;
+                end else begin
+                    invalid_payload = 1'b1;
+                    invalid_header = 1'b1;
+                    next_state = WAIT_START;
+                end
 
                 for (k = 0; k < 8; k = k + 1) begin
                     if (!found_fcs) begin
                         // Verificar cuando comienza el FCS
-                        
-                        if (i_rx_data[k*8 +: FCS_WIDTH] == i_rx_fcs) begin
-                            next_payload_size = payload_size + i; 
+                        if (payload_size >= length_type_size) begin
+                            next_payload_size = payload_size + k; 
                             found_fcs = 1'b1; 
                         end
                     end
@@ -149,6 +161,7 @@ module mac_checker #
                     invalid_payload = 1'b0;
                     valid_fcs = 1'b0;
                     invalid_fcs = 1'b0;
+                    valid_data = 1'b0;
                     next_state = FCS;
                 end else begin
                     next_payload_size = payload_size + 8;
@@ -158,7 +171,12 @@ module mac_checker #
 
             // Chekeamos el FCS que tenemos como dato en la trama con el que recibimos de i_rx_fcs de nuestro otro modulo
             FCS: begin
-                
+                for (n=0; n < 4; n = n + 1) begin
+                    if (i_rx_fcs[n*8 +: 8] != i_rx_data[n*8 +: 8]) begin
+                        invalid_fcs = 1'b1;
+                        next_state = WAIT_START;
+                    end
+                end
             end
 
             default: next_state = WAIT_START;
