@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 `include "generator.sv"
-`include "checker.sv"
+`include "mii_checker.sv"
 
 // iverilog -g2012 -o tb/tb1 tb/tb1.sv
 // vvp tb/tb1
