@@ -89,17 +89,30 @@ module mac_checker #
 
             // Chekeamos el preambulo y el SFD
             PREAMBLE: begin
-                for (i = 0; i < 7; i = i + 1) begin
-                    if(i_rx_data[i*8 +: 8] == PREAMBLE_CODE && sfd_data_byte == SFD_CODE) begin
-                        valid_preamble = 1'b1;
-                        invalid_preamble = 1'b0;
-                        valid_header = 1'b0;
-                        invalid_header = 1'b0;
-                        next_state = HEADER;
-                    end else begin
-                        invalid_preamble = 1'b1;
-                        next_state = WAIT_START;
+                for (i = 0; i < 8; i = i + 1) begin
+                    if(i < 7) begin
+                        if(i_rx_data[i*8 +: 8] == PREAMBLE_CODE) begin
+                            valid_preamble = 1'b1;
+                            invalid_preamble = 1'b0;
+                            valid_header = 1'b0;
+                            invalid_header = 1'b0;
+                        end else begin
+                            invalid_preamble = 1'b1;
+                            next_state = WAIT_START;
+                        end
+                    end else if (i == 7) begin
+                        if(i_rx_data[i*8 +: 8] == SFD_CODE && !invalid_preamble) begin
+                            valid_preamble = 1'b1;
+                            invalid_preamble = 1'b0;
+                            valid_header = 1'b0;
+                            invalid_header = 1'b0;
+                            next_state = HEADER;
+                        end else begin
+                            invalid_preamble = 1'b1;
+                            next_state = WAIT_START;
+                        end
                     end
+
                 end
             end
 
