@@ -11,7 +11,7 @@ module mii_checker
 )
 (
     input  logic                  clk,
-    input  logic                  i_rst,
+    input  logic                  i_rst_n,
     input  logic [DATA_WIDTH-1:0] i_tx_data,
     input  logic [CTRL_WIDTH-1:0] i_tx_ctrl,
     output logic                  payload_error,  // Error: payload fuera de rango
@@ -22,12 +22,12 @@ module mii_checker
 
     // Constantes de validación
     localparam int MIN_PAYLOAD_BYTES = 46;
-    localparam int MAX_PAYLOAD_BYTES = 150;
+    localparam int MAX_PAYLOAD_BYTES = 1500;
 
     localparam int MIN_INTERGAP = 12; 
     localparam int MAX_INTERGAP = 40;
 
-    localparam int BUFFER_SIZE = 150;
+    localparam int BUFFER_SIZE = 1500;
 
     typedef enum logic [1:0] {
         WAIT_START = 2'b00,
@@ -156,8 +156,8 @@ module mii_checker
     end
 
     // Actualización sincrónica de los registros internos
-    always_ff @(posedge clk or posedge i_rst) begin
-        if (i_rst) begin
+    always_ff @(posedge clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
             state <= WAIT_START;
             payload_counter <= 0;
             intergap_counter <= 0;

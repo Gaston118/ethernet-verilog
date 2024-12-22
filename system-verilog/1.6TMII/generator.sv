@@ -10,7 +10,7 @@ module generator
 )
 (
     input  logic                  clk,
-    input  logic                  i_rst,
+    input  logic                  i_rst_n,
     output logic [DATA_WIDTH-1:0] o_tx_data,
     output logic [CTRL_WIDTH-1:0] o_tx_ctrl
 );
@@ -111,8 +111,8 @@ module generator
 end
 
     // Actualización síncrona
-    always_ff @(posedge clk or posedge i_rst) begin
-        if (i_rst) begin
+    always_ff @(posedge clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
             state <= IDLE;
             tx_data <= {DATA_WIDTH{1'b0}};
             tx_ctrl <= {CTRL_WIDTH{1'b0}};

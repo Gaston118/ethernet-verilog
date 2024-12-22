@@ -16,7 +16,7 @@ module mac_checker #
 )
 (
     input logic                  clk,
-    input logic                  i_rst,
+    input logic                  i_rst_n,
     input logic [DATA_WIDTH-1:0] i_rx_data,
     input logic [CTRL_WIDTH-1:0] i_rx_ctrl,
     input logic [FCS_WIDTH-1:0]  i_rx_fcs,
@@ -196,8 +196,8 @@ module mac_checker #
         endcase
     end
 
-    always_ff @(posedge clk or posedge i_rst) begin
-        if (i_rst) begin
+    always_ff @(posedge clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
             state <= WAIT_START;
             payload_size <= 0;
         end else begin

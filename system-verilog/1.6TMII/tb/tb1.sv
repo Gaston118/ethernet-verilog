@@ -14,7 +14,7 @@ module tb1;
 
     // Signals
     logic clk;
-    logic i_rst;
+    logic i_rst_n;
     logic [DATA_WIDTH-1:0] o_tx_data;
     logic [CTRL_WIDTH-1:0] o_tx_ctrl;
     logic other_error, payload_error, intergap_error;
@@ -25,7 +25,7 @@ module tb1;
         .CTRL_WIDTH(CTRL_WIDTH)
     ) dut (
         .clk(clk),
-        .i_rst(i_rst),
+        .i_rst_n(i_rst_n),
         .o_tx_data(o_tx_data),
         .o_tx_ctrl(o_tx_ctrl)
     );
@@ -36,7 +36,7 @@ module tb1;
         .CTRL_WIDTH(CTRL_WIDTH)
     ) uut (
         .clk(clk),
-        .i_rst(i_rst),
+        .i_rst_n(i_rst_n),
         .i_tx_data(o_tx_data),
         .i_tx_ctrl(o_tx_ctrl),
         .payload_error(payload_error),
@@ -55,9 +55,9 @@ module tb1;
 
         clk = 0;
         // Initialize signals
-        i_rst = 1;
+        i_rst_n = 0;
         #20; // Hold reset for 10 ns
-        i_rst = 0;
+        i_rst_n = 1;
 
         // Run the simulation for a certain period
         #2000;
