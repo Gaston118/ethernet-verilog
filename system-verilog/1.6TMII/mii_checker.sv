@@ -17,17 +17,21 @@ module mii_checker
     output logic                  payload_error,  // Error: payload fuera de rango
     output logic                  intergap_error, // Error: intergap insuficiente
     output logic                  other_error,    // Error: otros errores
-    output logic [DATA_WIDTH-1:0] o_captured_data // Datos capturados
+    output logic [DATA_WIDTH-1:0] o_captured_data,
+    output logic                  o_data_valid,
+    output logic [DATA_WIDTH-1:0] o_buffer_data [0:BUFFER_SIZE-1],
+    output logic [MAX-1:0]        o_array_data
 );
 
     // Constantes de validación
     localparam int MIN_PAYLOAD_BYTES = 46;
     localparam int MAX_PAYLOAD_BYTES = 1500;
+    localparam int MAX = MIN_PAYLOAD_BYTES + MAX_PAYLOAD_BYTES;
 
     localparam int MIN_INTERGAP = 12; 
     localparam int MAX_INTERGAP = 40;
 
-    localparam int BUFFER_SIZE = 1500;
+    localparam int BUFFER_SIZE = 256;
 
     typedef enum logic [1:0] {
         WAIT_START = 2'b00,
@@ -46,13 +50,19 @@ module mii_checker
     logic tx_ctrl_bit;
     int i, j;
 
-    logic [DATA_WIDTH-1:0] data_buffer [0:BUFFER_SIZE-1]; // Buffer de datos capturados
+    logic [DATA_WIDTH-1:0] data_buffer [0 : BUFFER_SIZE-1]; 
     int buffer_index, next_buffer_index;
     logic capture_enable;
+    logic valid;
+    logic [MAX-1:0] array_data;
+    int array_index;
 
     assign start_data_byte = i_tx_data[7:0];
     assign tx_ctrl_bit  = i_tx_ctrl[0];
     assign o_captured_data = data_buffer[buffer_index];
+    assign o_data_valid = valid;
+    assign o_buffer_data = data_buffer;
+    assign o_array_data = array_data;
 
     // Lógica combinacional para determinar el próximo estado
     always_comb begin
@@ -66,6 +76,7 @@ module mii_checker
         found_start = 1'b0;
         idle_error = 1'b0;
         valid_idle = 1'b0;
+        valid = 1'b0;
 
         case (state)
         WAIT_START: begin
@@ -74,6 +85,7 @@ module mii_checker
                 next_payload_counter = 7;
                 capture_enable = 1'b1;
                 next_buffer_index = 0;
+                array_index = 0;
             end
         end
 
@@ -127,6 +139,7 @@ module mii_checker
             next_intergap_counter = intergap_counter; 
             next_payload_counter = 0; 
             capture_enable = 1'b0;
+            valid = 1'b1;
 
             for (i = 0; i < CTRL_WIDTH; i = i + 1) begin
                 if (!found_start) begin
@@ -136,6 +149,8 @@ module mii_checker
                         found_start = 1'b1; 
                         capture_enable = 1'b1;
                         next_buffer_index = 0;
+                        array_index = 0;
+                        array_data = 0;
                     end
                 end 
             end
@@ -163,6 +178,8 @@ module mii_checker
             intergap_counter <= 0;
             capture_enable <= 0;
             buffer_index <= 0;
+            array_data <= 0;
+            array_index <= 0;
             for (i = 0; i < BUFFER_SIZE; i = i + 1) begin
                 data_buffer[i] <= 0;
             end
@@ -176,6 +193,8 @@ module mii_checker
             buffer_index <= next_buffer_index;
             if (capture_enable) begin
                 data_buffer[next_buffer_index] <= i_tx_data;
+                array_data[array_index*64 +: 64] <= i_tx_data;
+                array_index <= array_index + 1;
             end 
         end
     end

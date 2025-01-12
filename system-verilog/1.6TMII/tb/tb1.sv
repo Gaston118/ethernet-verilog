@@ -11,6 +11,7 @@ module tb1;
     // Parameters
     localparam int DATA_WIDTH = 64;
     localparam int CTRL_WIDTH = 8;
+    localparam int BUFFER_SIZE = 256;
 
     // Signals
     logic clk;
@@ -18,6 +19,8 @@ module tb1;
     logic [DATA_WIDTH-1:0] o_tx_data;
     logic [CTRL_WIDTH-1:0] o_tx_ctrl;
     logic other_error, payload_error, intergap_error;
+    logic [DATA_WIDTH-1:0] o_captured_data;
+    logic o_data_valid;
 
     // Instantiate the generator module
     generator #(
@@ -41,7 +44,9 @@ module tb1;
         .i_tx_ctrl(o_tx_ctrl),
         .payload_error(payload_error),
         .intergap_error(intergap_error),
-        .other_error(other_error)
+        .other_error(other_error),
+        .o_captured_data(o_captured_data),
+        .o_data_valid(o_data_valid)
     );
 
 
