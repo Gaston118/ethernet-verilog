@@ -46,6 +46,7 @@ module mac_checker #
 
     // Archivo de log
     integer log_file;
+    integer counter; 
     reg [PREAMBLE_SIZE*8-1:0] preamble_accum;
 
     initial begin
@@ -57,23 +58,58 @@ module mac_checker #
         end
     end
 
-    always_ff @(posedge clk or negedge i_rst_n) begin
+    always_ff @(posedge i_data_valid or negedge i_rst_n) begin
         if (!i_rst_n) begin
             preamble_error <= 1'b0;
             header_error <= 1'b0;
             payload_error <= 1'b0;
             fcs_error <= 1'b0;
+            counter <= 1;
         end else if (i_data_valid) begin
-            // Inicialización de errores
+            // Inicialización de errores y acumuladores
             preamble_error <= 1'b0;
             header_error <= 1'b0;
             payload_error <= 1'b0;
             fcs_error <= 1'b0;
             preamble_accum = 48'b0;
-
-            // Verificación del preámbulo y SFD
+    
+            // Log del frame actual
+            $fdisplay(log_file, "FRAME %d", counter);
             $fdisplay(log_file, "Verificación del preámbulo y SFD");
+    
+            // Verificar el preámbulo y SFD del frame en i_rx_array_data
             for (int i = 0; i < 8; i++) begin
+                logic [7:0] current_byte;
+                current_byte = i_rx_array_data[(i * 8) +: 8]; // Extraer byte actual
+    
+                if (i == 0 && current_byte == START_CODE) begin
+                    $fdisplay(log_file, "START CODE: %h", current_byte);
+                end else if (i > 0 && i < 7 && current_byte == PREAMBLE_CODE) begin
+                    preamble_accum = {preamble_accum[PREAMBLE_SIZE*8-9:0], current_byte};
+                end else if (i == 7 && current_byte == SFD_CODE) begin
+                    $fdisplay(log_file, "PREAMBLE CODE: %h", preamble_accum);
+                    $fdisplay(log_file, "SFD CODE: %h", current_byte);
+                end else begin
+                    preamble_error <= 1'b1;
+                    $fdisplay(log_file, "ERROR: Byte inesperado %h", current_byte);
+                end
+            end
+            counter = counter + 1;
+        end
+        $fflush(log_file);
+    end    
+
+    final begin
+        // Cerrar el archivo al finalizar la simulación
+        if (log_file != 0) begin
+            $fclose(log_file);
+        end
+    end
+
+endmodule
+
+
+/*for (int i = 0; i < 8; i++) begin
                 if (i == 0 && i_rx_data[0][i*8 +: 8] == START_CODE) begin
                     $fdisplay(log_file, "START CODE: %h", i_rx_data[0][i*8 +: 8]);
                 end else if (i > 0 && i < 7 && i_rx_data[0][i*8 +: 8] == PREAMBLE_CODE) begin
@@ -85,16 +121,4 @@ module mac_checker #
                     preamble_error <= 1'b1;
                     $fdisplay(log_file, "ERROR: %h", i_rx_data[0][i*8 +: 8]);
                 end
-            end
-
-            // Verificación del encabezado
-
-            // Verificación del payload
-
-            // Verificación del FCS
-
-            $fclose(log_file);
-        end
-    end
-
-endmodule
+            end*/

@@ -117,7 +117,7 @@ module mii_checker
                         end
                     end
                 end
-        
+
                 if (!valid_idle) begin
                     idle_error = 1'b1;
                     other_error = 1'b1;
@@ -136,15 +136,16 @@ module mii_checker
         end
         
         CHECK_INTERGAP: begin
+            valid = 1'b1;
             next_intergap_counter = intergap_counter; 
             next_payload_counter = 0; 
             capture_enable = 1'b0;
-            valid = 1'b1;
 
             for (i = 0; i < CTRL_WIDTH; i = i + 1) begin
                 if (!found_start) begin
                     if (i_tx_ctrl[i] == 1'b1 && i_tx_data[i*8 +: 8] == START_CODE) begin
                         //next_intergap_counter = intergap_counter + i; 
+                        valid = 1'b0;
                         next_payload_counter = payload_counter + (7-i); 
                         found_start = 1'b1; 
                         capture_enable = 1'b1;
