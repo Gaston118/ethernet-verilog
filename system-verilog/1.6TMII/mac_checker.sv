@@ -20,7 +20,6 @@ module mac_checker #
     input logic [DATA_WIDTH-1:0]        i_rx_data [0:255],
     input logic [MAX_FRAME_SIZE-1:0]    i_rx_array_data,
     input logic [CTRL_WIDTH-1:0]        i_rx_ctrl,
-    input logic [FCS_WIDTH-1:0]         i_rx_fcs,
     input logic                         i_data_valid,
     output logic                        preamble_error,
     output logic                        fcs_error,   
@@ -42,7 +41,11 @@ module mac_checker #
     localparam int MAX_FRAME_SIZE       = 1518;
 
     logic [15:0] length_type; // 2 bytes
-    int payload_size;
+    logic [47:0] sa; // 6 bytes
+    logic [47:0] da; // 6 bytes
+    logic [FCS_WIDTH-1:0] fcs; // 4 bytes
+    integer payload_size; // Tamaño del payload
+    integer payload_counter; // Contador de bytes del payload
 
     // Archivo de log
     integer log_file;
@@ -65,17 +68,23 @@ module mac_checker #
             payload_error <= 1'b0;
             fcs_error <= 1'b0;
             counter <= 1;
+            payload_size <= 0;
+            payload_counter <= 0;
         end else if (i_data_valid) begin
             // Inicialización de errores y acumuladores
             preamble_error <= 1'b0;
             header_error <= 1'b0;
-            payload_error <= 1'b0;
+            payload_error <= 0;
             fcs_error <= 1'b0;
-            preamble_accum = 48'b0;
-    
+            preamble_accum <= 48'b0;
+            payload_counter <= 0;
+            payload_size <= 0;
+
+            $fdisplay(log_file, "\n=========================================\n");
+
             // Log del frame actual
             $fdisplay(log_file, "FRAME %d", counter);
-            $fdisplay(log_file, "Verificación del preámbulo y SFD");
+            $fdisplay(log_file, "----> PREAMBULO y SFD <----");
     
             // Verificar el preámbulo y SFD del frame en i_rx_array_data
             for (int i = 0; i < 8; i++) begin
@@ -94,6 +103,67 @@ module mac_checker #
                     $fdisplay(log_file, "ERROR: Byte inesperado %h", current_byte);
                 end
             end
+
+            // Verificar el header del frame 
+            // SA - DA - LENGTH_TYPE
+            $fdisplay(log_file, "----> HEADER (SA, DA, LENGTH_TYPE) <----");
+
+            da = i_rx_array_data[64 +: 48];
+            if (da == DST_ADDR_CODE) begin
+                $fdisplay(log_file, "DA: %h", da);
+            end else begin
+                header_error <= 1'b1;
+                $fdisplay(log_file, "ERROR: DA inesperado %h", da);
+            end
+
+            sa = i_rx_array_data[112 +: 48];
+            if (sa == SRC_ADDR_CODE) begin
+                $fdisplay(log_file, "SA: %h", sa);
+            end else begin
+                header_error <= 1'b1;
+                $fdisplay(log_file, "ERROR: SA inesperado %h", sa);
+            end
+
+            length_type = i_rx_array_data[160 +: 16];
+            $fdisplay(log_file, "LENGTH_TYPE: %h", length_type);
+
+            // Verificar el payload del frame
+            $fdisplay(log_file, "----> PAYLOAD <----");
+            payload_size = length_type;
+            $fdisplay(log_file, "PAYLOAD SIZE: %d", payload_size);
+
+            if (payload_size < MIN_MAC_CLIENT_DATA || payload_size > MAX_MAC_CLIENT_DATA) begin
+                payload_error <= 1'b1;
+                $fdisplay(log_file, "ERROR: PAYLOAD SIZE %d", payload_size);
+            end else begin
+                // Contar Bytes de payload 
+                for(int k = 176; k < payload_size + 176 + 40; k = k+8) begin
+                    logic [7:0] current_byte;
+                    current_byte = i_rx_array_data[k +: 8]; 
+
+                    if(current_byte != TERM_CODE) begin
+                        payload_counter = payload_counter + 1;
+                    end else begin
+                        $fdisplay(log_file, "TERMINATION CODE %h", current_byte);
+                        payload_counter = payload_counter - 5; 
+                        // 1 byte term code y 4 de FCS
+                        fcs = i_rx_array_data[(k - 32) +: 32];
+                        break;
+                    end
+                end
+
+                if(payload_counter == payload_size) begin
+                    $fdisplay(log_file, "PAYLOAD OK");
+                end else begin
+                    payload_error <= 1'b1;
+                    $fdisplay(log_file, "ERROR: PAYLOAD %d", payload_counter);
+                end
+            end
+
+            // Verificar FCS
+            $fdisplay(log_file, "----> FCS <----");
+            $fdisplay(log_file, "FCS: %h", fcs);
+
             counter = counter + 1;
         end
         $fflush(log_file);
@@ -108,17 +178,3 @@ module mac_checker #
 
 endmodule
 
-
-/*for (int i = 0; i < 8; i++) begin
-                if (i == 0 && i_rx_data[0][i*8 +: 8] == START_CODE) begin
-                    $fdisplay(log_file, "START CODE: %h", i_rx_data[0][i*8 +: 8]);
-                end else if (i > 0 && i < 7 && i_rx_data[0][i*8 +: 8] == PREAMBLE_CODE) begin
-                    preamble_accum = {preamble_accum[PREAMBLE_SIZE*8-1:0], i_rx_data[0][i*8 +: 8]};
-                end else if (i == 7 && i_rx_data[0][i*8 +: 8] == SFD_CODE) begin
-                    $fdisplay(log_file, "PREAMBLE CODE: %h", preamble_accum);
-                    $fdisplay(log_file, "SFD CODE: %h", i_rx_data[0][i*8 +: 8]);
-                end else begin
-                    preamble_error <= 1'b1;
-                    $fdisplay(log_file, "ERROR: %h", i_rx_data[0][i*8 +: 8]);
-                end
-            end*/

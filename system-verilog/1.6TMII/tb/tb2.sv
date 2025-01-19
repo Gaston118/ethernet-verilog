@@ -101,7 +101,6 @@ module tb2;
         .i_rx_data(buffer_data),
         .i_rx_array_data(array_data),
         .i_rx_ctrl(o_mii_valid),
-        .i_rx_fcs(),
         .i_data_valid(valid_mac),
         .preamble_error(preamble_error),
         .fcs_error(fcs_error),
@@ -116,7 +115,7 @@ module tb2;
         i_start = 0;
         i_dest_address = 48'hFFFFFFFFFFFF;  // Broadcast address
         i_src_address = 48'h123456789ABC;   // Example source address
-        i_eth_type = 16'h0800;              // IP protocol
+        i_eth_type = 16'h4B0;              
         i_payload_length = PAYLOAD_LENGTH;
         i_interrupt = 8'd0;                // No interrupt
         
