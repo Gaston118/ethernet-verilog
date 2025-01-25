@@ -46,6 +46,7 @@ module mac_checker #
     logic [FCS_WIDTH-1:0] fcs; // 4 bytes
     integer payload_size; // Tamaño del payload
     integer payload_counter; // Contador de bytes del payload
+    logic [31:0] calculated_fcs;
 
     // Archivo de log
     integer log_file;
@@ -63,19 +64,19 @@ module mac_checker #
 
     always_ff @(posedge i_data_valid or negedge i_rst_n) begin
         if (!i_rst_n) begin
-            preamble_error <= 1'b0;
-            header_error <= 1'b0;
-            payload_error <= 1'b0;
-            fcs_error <= 1'b0;
+            preamble_error <= 'd0;
+            header_error <= 'd0;
+            payload_error <= 'd0;
+            fcs_error <= 'd0;
             counter <= 1;
             payload_size <= 0;
             payload_counter <= 0;
         end else if (i_data_valid) begin
             // Inicialización de errores y acumuladores
-            preamble_error <= 1'b0;
-            header_error <= 1'b0;
-            payload_error <= 0;
-            fcs_error <= 1'b0;
+            preamble_error <= 'd0;
+            header_error <= 'd0;
+            payload_error <= 'd0;
+            fcs_error <= 'd0;
             preamble_accum <= 48'b0;
             payload_counter <= 0;
             payload_size <= 0;
@@ -99,7 +100,7 @@ module mac_checker #
                     $fdisplay(log_file, "PREAMBLE CODE: %h", preamble_accum);
                     $fdisplay(log_file, "SFD CODE: %h", current_byte);
                 end else begin
-                    preamble_error <= 1'b1;
+                    preamble_error <= 'd1;
                     $fdisplay(log_file, "ERROR: Byte inesperado %h", current_byte);
                 end
             end
@@ -112,7 +113,7 @@ module mac_checker #
             if (da == DST_ADDR_CODE) begin
                 $fdisplay(log_file, "DA: %h", da);
             end else begin
-                header_error <= 1'b1;
+                header_error <= 'd1;
                 $fdisplay(log_file, "ERROR: DA inesperado %h", da);
             end
 
@@ -120,7 +121,7 @@ module mac_checker #
             if (sa == SRC_ADDR_CODE) begin
                 $fdisplay(log_file, "SA: %h", sa);
             end else begin
-                header_error <= 1'b1;
+                header_error <= 'd1;
                 $fdisplay(log_file, "ERROR: SA inesperado %h", sa);
             end
 
@@ -133,7 +134,7 @@ module mac_checker #
             $fdisplay(log_file, "PAYLOAD SIZE: %d", payload_size);
 
             if (payload_size < MIN_MAC_CLIENT_DATA || payload_size > MAX_MAC_CLIENT_DATA) begin
-                payload_error <= 1'b1;
+                payload_error <= 'd1;
                 $fdisplay(log_file, "ERROR: PAYLOAD SIZE %d", payload_size);
             end else begin
                 // Contar Bytes de payload 
@@ -155,16 +156,23 @@ module mac_checker #
                 if(payload_counter == payload_size) begin
                     $fdisplay(log_file, "PAYLOAD OK");
                 end else begin
-                    payload_error <= 1'b1;
+                    payload_error <= 'd1;
                     $fdisplay(log_file, "ERROR: PAYLOAD %d", payload_counter);
                 end
             end
-
+           
             // Verificar FCS
             $fdisplay(log_file, "----> FCS <----");
             $fdisplay(log_file, "FCS: %h", fcs);
+            calculated_fcs = calculate_crc32(i_rx_array_data, payload_size + 21);
+            $fdisplay(log_file, "CALCULATED FCS: %h", calculated_fcs);
 
             counter = counter + 1;
+        end else begin
+            preamble_error <= 'd0;
+            header_error <= 'd0;
+            payload_error <= 'd0;
+            fcs_error <= 'd0;
         end
         $fflush(log_file);
     end    
@@ -176,5 +184,35 @@ module mac_checker #
         end
     end
 
+    function automatic logic [31:0] calculate_crc32(
+        input logic [MAX_FRAME_SIZE-1:0] frame_data,
+        input integer frame_size
+    );
+        // Polinomio CRC-32 (IEEE 802.3)
+        localparam logic [32:0] CRC_POLYNOMIAL = 33'h04C11DB7;
+
+        logic [32:0] crc_reg;
+        logic [32:0] temp_data;
+        integer i;
+
+        crc_reg = 33'hFFFFFFFF;
+        for (i = 8; i < frame_size*8; i = i + 1) begin
+            temp_data = {frame_data[i], 1'b0} ^ crc_reg;
+            for (int j = 0; j < 32; j = j + 1) begin
+                if (temp_data[32]) begin
+                    temp_data = (temp_data << 1) ^ CRC_POLYNOMIAL;
+                end else begin
+                    temp_data = temp_data << 1;
+                end
+            end
+            crc_reg = temp_data;
+        end
+
+        return ~crc_reg[31:0];
+        
+    endfunction
+
+
 endmodule
+
 
