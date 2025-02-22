@@ -47,6 +47,7 @@ module mac_checker #
     integer payload_size; // Tamaño del payload
     integer payload_counter; // Contador de bytes del payload
     logic [31:0] calculated_fcs;
+    logic [31:0] calculated_crc32_v2;
 
     // Archivo de log
     integer log_file;
@@ -128,31 +129,39 @@ module mac_checker #
             length_type = i_rx_array_data[160 +: 16];
             $fdisplay(log_file, "LENGTH_TYPE: %h", length_type);
 
+            if(length_type < 1500) begin
+                payload_size = length_type;
+            end else begin 
+                payload_size = -1;
+            end
+
             // Verificar el payload del frame
             $fdisplay(log_file, "----> PAYLOAD <----");
-            payload_size = length_type;
-            $fdisplay(log_file, "PAYLOAD SIZE: %d", payload_size);
-
-            if (payload_size < MIN_MAC_CLIENT_DATA || payload_size > MAX_MAC_CLIENT_DATA) begin
-                payload_error <= 'd1;
-                $fdisplay(log_file, "ERROR: PAYLOAD SIZE %d", payload_size);
+            if (payload_size > 1 && payload_size < 1500) begin
+                $fdisplay(log_file, "PAYLOAD SIZE: %d", payload_size);
             end else begin
-                // Contar Bytes de payload 
-                for(int k = 176; k < payload_size + 176 + 40; k = k+8) begin
-                    logic [7:0] current_byte;
-                    current_byte = i_rx_array_data[k +: 8]; 
+                $fdisplay(log_file, "[PAYLOAD SIZE]: XXX");
+            end
+                
+            // Contar Bytes de payload 
+            for(int k = 176; k < 1500; k = k+8) begin
+                logic [7:0] current_byte;
+                current_byte = i_rx_array_data[k +: 8]; 
 
-                    if(current_byte != TERM_CODE) begin
-                        payload_counter = payload_counter + 1;
-                    end else begin
-                        $fdisplay(log_file, "TERMINATION CODE %h", current_byte);
-                        payload_counter = payload_counter - 5; 
-                        // 1 byte term code y 4 de FCS
-                        fcs = i_rx_array_data[(k - 32) +: 32];
-                        break;
-                    end
+                if(current_byte != TERM_CODE) begin
+                    payload_counter = payload_counter + 1;
+                end else begin
+                    $fdisplay(log_file, "TERMINATION CODE %h", current_byte);
+                    payload_counter = payload_counter - 5; 
+                    // 1 byte term code y 4 de FCS
+                    fcs = i_rx_array_data[(k - 32) +: 32];
+                    break;
                 end
+            end
+            
+            $fdisplay(log_file, "PAYLOAD COUNTER: %d", payload_counter);
 
+            if(payload_size > 1 && payload_size < 1500) begin
                 if(payload_counter == payload_size) begin
                     $fdisplay(log_file, "PAYLOAD OK");
                 end else begin
@@ -164,8 +173,10 @@ module mac_checker #
             // Verificar FCS
             $fdisplay(log_file, "----> FCS <----");
             $fdisplay(log_file, "FCS: %h", fcs);
-            calculated_fcs = calculate_crc32(i_rx_array_data, payload_size + 21);
+            calculated_fcs = calculate_crc32(i_rx_array_data, payload_counter + 14);
             $fdisplay(log_file, "CALCULATED FCS: %h", calculated_fcs);
+            calculated_crc32_v2 = calculate_crc32_v2(i_rx_array_data, payload_counter + 14);
+            $fdisplay(log_file, "CALCULATED FCS V2: %h", calculated_crc32_v2);
 
             counter = counter + 1;
         end else begin
@@ -188,28 +199,66 @@ module mac_checker #
         input logic [MAX_FRAME_SIZE-1:0] frame_data,
         input integer frame_size
     );
+
         // Polinomio CRC-32 (IEEE 802.3)
-        localparam logic [32:0] CRC_POLYNOMIAL = 33'h04C11DB7;
+        localparam logic [31:0] CRC_POLYNOMIAL = 32'h04C11DB7;
 
-        logic [32:0] crc_reg;
-        logic [32:0] temp_data;
-        integer i;
+        logic [31:0] crc_reg;
+        integer i, j;
 
-        crc_reg = 33'hFFFFFFFF;
-        for (i = 8; i < frame_size*8; i = i + 1) begin
-            temp_data = {frame_data[i], 1'b0} ^ crc_reg;
-            for (int j = 0; j < 32; j = j + 1) begin
-                if (temp_data[32]) begin
-                    temp_data = (temp_data << 1) ^ CRC_POLYNOMIAL;
-                end else begin
-                    temp_data = temp_data << 1;
-                end
+        // Inicialización del CRC con 0xFFFFFFFF
+        crc_reg = 32'hFFFFFFFF;
+
+        // Recorrer bit a bit el frame
+        for (i = 64; i < frame_size * 8; i = i + 1) begin
+            logic bit_in = frame_data[(frame_size * 8) - 1 - i] ^ crc_reg[31];
+            crc_reg = (crc_reg << 1) | bit_in;
+        
+            if (bit_in) begin
+                crc_reg = crc_reg ^ CRC_POLYNOMIAL;
             end
-            crc_reg = temp_data;
         end
 
-        return ~crc_reg[31:0];
+        // Complemento final
+        return ~crc_reg;
+    endfunction
+
+
+    function automatic logic [31:0] calculate_crc32_v2
+    (
+        input logic [MAX_FRAME_SIZE-1:0] frame_data,
+        input integer frame_size
+    );
+
+        logic [31:0] next_crc;
+        logic [63:0] data_xor;
+        int i, j;
+
+        next_crc = 32'hFFFFFFFF;
+
+        for(i = 64; i < (frame_size*8); i = i + 64) begin
+            logic [63:0] next_frame_out;
+            next_frame_out = frame_data[i +: 64];
+            //$fdisplay(log_file, "FRAME OUT: %h", next_frame_out);
+
+            if (i == 64) begin
+                data_xor = {32'hFFFFFFFF, 32'b0} ^ next_frame_out;
+            end else begin
+                data_xor = {next_crc, 32'b0} ^ next_frame_out;
+            end
+            
+            for (j = 0; j < 64; j = j + 1) begin
+                if (data_xor[63]) begin
+                    data_xor = (data_xor << 1) ^ 32'h04C11DB7;
+                end else begin
+                    data_xor = (data_xor << 1);
+                end
+            end
+            
+            next_crc = ~data_xor[31:0];
+        end
         
+        return next_crc;
     endfunction
 
 

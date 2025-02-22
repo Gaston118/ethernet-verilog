@@ -115,7 +115,7 @@ module tb2;
         i_start = 0;
         i_dest_address = 48'hFFFFFFFFFFFF;  // Broadcast address
         i_src_address = 48'h123456789ABC;   // Example source address
-        i_eth_type = 16'h4B0;              
+        i_eth_type = 16'h0800;              
         i_payload_length = PAYLOAD_LENGTH;
         i_interrupt = 8'd0;                // No interrupt
         
