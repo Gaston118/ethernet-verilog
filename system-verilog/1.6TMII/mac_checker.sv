@@ -148,11 +148,13 @@ module mac_checker #
                 logic [7:0] current_byte;
                 current_byte = i_rx_array_data[k +: 8]; 
 
+                $fdisplay(log_file, "BYTE %d: %h Counter %d", k, current_byte, payload_counter);
+
                 if(current_byte != TERM_CODE) begin
                     payload_counter = payload_counter + 1;
                 end else begin
                     $fdisplay(log_file, "TERMINATION CODE %h", current_byte);
-                    payload_counter = payload_counter - 5; 
+                    payload_counter = payload_counter - 4; 
                     // 1 byte term code y 4 de FCS
                     fcs = i_rx_array_data[(k - 32) +: 32];
                     break;
